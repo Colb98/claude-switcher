@@ -1,0 +1,221 @@
+<Window x:Class="ClaudeSwitcher.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Claude Switcher" Width="1000" Height="720" MinWidth="760" MinHeight="520"
+        Background="{StaticResource Bg}" FontFamily="Segoe UI" FontSize="13"
+        Foreground="{StaticResource Ink}" WindowStartupLocation="CenterScreen">
+    <Grid Margin="20,16,20,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <DockPanel Margin="0,0,0,12">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Content="Làm mới usage" Click="RefreshUsage_Click" Margin="0,0,8,0"/>
+                <Button Content="+ Profile mới" Style="{StaticResource Primary}" Click="AddProfile_Click"/>
+            </StackPanel>
+            <StackPanel>
+                <TextBlock Text="Claude Switcher" FontSize="22" FontWeight="SemiBold"/>
+                <TextBlock Text="Chạy nhiều tài khoản Claude Desktop cùng lúc" Foreground="{StaticResource Muted}"/>
+            </StackPanel>
+        </DockPanel>
+
+        <TabControl Grid.Row="1" x:Name="Tabs" Background="Transparent" BorderThickness="0" Padding="0">
+            <TabItem Header="Profile">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Background="{StaticResource Card}" Padding="14">
+                    <ItemsControl x:Name="ProfileList">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource CardBorder}" Width="440" Margin="0,0,12,12" Background="#FCFBF8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="6"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Background="{Binding ColorBrush}" CornerRadius="3" Margin="0,2,0,2"/>
+                                        <StackPanel Grid.Column="1" Margin="14,0,0,0">
+                                            <DockPanel>
+                                                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top">
+                                                    <Ellipse Width="8" Height="8" Fill="{Binding RunBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding RunState}" Foreground="{StaticResource Muted}" FontSize="12" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold"/>
+                                                    <TextBlock Text="{Binding Account}" Foreground="{StaticResource Muted}" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding Plan}" Foreground="{StaticResource Accent}" FontSize="12" FontWeight="SemiBold"/>
+                                                </StackPanel>
+                                            </DockPanel>
+
+                                            <ItemsControl ItemsSource="{Binding Bars}" Margin="0,12,0,0">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Margin="0,0,0,9">
+                                                            <DockPanel>
+                                                                <TextBlock DockPanel.Dock="Right" Text="{Binding Value}" FontWeight="SemiBold"/>
+                                                                <TextBlock Text="{Binding Label}" FontSize="12"/>
+                                                            </DockPanel>
+                                                            <ProgressBar Value="{Binding Percent, Mode=OneWay}" Maximum="100" Height="7" Margin="0,4,0,2"
+                                                                         Foreground="{Binding Brush}" Background="{StaticResource Track}" BorderThickness="0"/>
+                                                            <TextBlock Text="{Binding Reset}" FontSize="11" Foreground="{StaticResource Muted}"/>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <TextBlock Text="{Binding UsageMessage}" Foreground="{StaticResource Warn}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding HasUsageMessage}" Value="False">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+
+                                            <DockPanel Margin="0,10,0,0">
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding FetchedText}" FontSize="11" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Content="Mở" Style="{StaticResource Primary}" Click="Launch_Click" Tag="{Binding}" Margin="0,0,6,0" Padding="16,5"/>
+                                                    <Button Content="Tắt" Style="{StaticResource Small}" Click="Stop_Click" Tag="{Binding}" Margin="0,0,6,0"/>
+                                                    <Button Content="Sửa" Style="{StaticResource Small}" Click="Edit_Click" Tag="{Binding}" Margin="0,0,6,0"/>
+                                                    <Button Content="⋯" Style="{StaticResource Small}" Click="More_Click" Tag="{Binding}"/>
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="Chuyển session">
+                <Grid Background="{StaticResource Card}">
+                    <Grid Margin="16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource Muted}" Margin="0,0,0,12"
+                                   Text="Chép session Code từ profile này sang profile khác để làm tiếp khi hết usage. Lịch sử hội thoại nằm trong ~\.claude dùng chung, nên session mở ở profile đích vẫn còn đầy đủ. Profile đích phải đã đăng nhập và đang tắt. Chat thường và Cowork lưu theo tài khoản trên server nên không chuyển được."/>
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock Text="Từ profile" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <ComboBox x:Name="SourceCombo" Width="220" DisplayMemberPath="Name" SelectionChanged="SourceCombo_SelectionChanged"/>
+                            <CheckBox x:Name="ShowArchived" Content="Hiện cả session đã lưu trữ" VerticalAlignment="Center" Margin="16,0,0,0"
+                                      Checked="ShowArchived_Changed" Unchecked="ShowArchived_Changed"/>
+                        </StackPanel>
+                        <ListView Grid.Row="2" x:Name="SessionList" BorderBrush="{StaticResource Border}">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Width="36">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox IsChecked="{Binding Selected}"/>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Tiêu đề" Width="360" DisplayMemberBinding="{Binding Title}"/>
+                                    <GridViewColumn Header="Thư mục" Width="260" DisplayMemberBinding="{Binding Cwd}"/>
+                                    <GridViewColumn Header="Hoạt động" Width="110" DisplayMemberBinding="{Binding LastActivityText}"/>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,12,0,0">
+                            <TextBlock Text="Sang profile" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <ComboBox x:Name="TargetCombo" Width="220" DisplayMemberPath="Name"/>
+                            <CheckBox x:Name="OverwriteSessions" Content="Ghi đè nếu đã có" VerticalAlignment="Center" Margin="16,0,16,0"/>
+                            <Button Content="Chuyển session đã chọn" Style="{StaticResource Primary}" Click="Transfer_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="MCP dùng chung">
+                <Grid Background="{StaticResource Card}">
+                    <Grid Margin="16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource Muted}" Margin="0,0,0,12"
+                                   Text="Tick để chọn profile nào dùng MCP server nào, rồi bấm Áp dụng. App gộp vào claude_desktop_config.json của từng profile (có backup), các cài đặt khác giữ nguyên. Connector của claude.ai gắn với tài khoản; muốn dùng chung, thêm nó bằng URL (chạy qua mcp-remote). Khởi động lại profile để nhận thay đổi."/>
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl x:Name="McpList">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border BorderBrush="{StaticResource Border}" BorderThickness="0,0,0,1" Padding="0,10">
+                                            <DockPanel>
+                                                <Button DockPanel.Dock="Right" Content="Xoá khỏi mọi profile" Style="{StaticResource Small}" Click="McpRemoveAll_Click" Tag="{Binding}" VerticalAlignment="Top"/>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
+                                                    <TextBlock Text="{Binding Summary}" Foreground="{StaticResource Muted}" FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                                    <ItemsControl ItemsSource="{Binding Toggles}" Margin="0,6,0,0">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <CheckBox Content="{Binding ProfileName}" IsChecked="{Binding Enabled}" Margin="0,0,16,0"/>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                        <WrapPanel Grid.Row="2" Margin="0,12,0,0">
+                            <Button Content="Bật cho tất cả" Click="McpAllOn_Click" Margin="0,0,8,0"/>
+                            <Button Content="Thêm MCP (JSON)" Click="McpAddJson_Click" Margin="0,0,8,0"/>
+                            <Button Content="Thêm connector bằng URL" Click="McpAddUrl_Click" Margin="0,0,8,0"/>
+                            <Button Content="Tải lại" Click="McpReload_Click" Margin="0,0,8,0"/>
+                            <Button Content="Áp dụng" Style="{StaticResource Primary}" Click="McpApply_Click"/>
+                        </WrapPanel>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Cài đặt">
+                <Grid Background="{StaticResource Card}">
+                    <StackPanel Margin="20" MaxWidth="640" HorizontalAlignment="Left">
+                        <CheckBox x:Name="StartWithWindows" Content="Khởi động cùng Windows" FontSize="14"
+                                  Checked="StartWithWindows_Changed" Unchecked="StartWithWindows_Changed"/>
+                        <TextBlock Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="24,2,0,12"
+                                   Text="Khi bật máy, Claude Switcher chạy ở khay hệ thống và tự mở các profile có bật &quot;Tự mở khi khởi động&quot; (chỉnh trong nút Sửa của từng profile)."/>
+                        <CheckBox x:Name="StartMinimized" Content="Thu nhỏ xuống khay khi khởi động cùng Windows"
+                                  Checked="Settings_Changed" Unchecked="Settings_Changed" Margin="0,0,0,16"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock Text="Làm mới usage mỗi" VerticalAlignment="Center" Width="190"/>
+                            <ComboBox x:Name="RefreshCombo" Width="120" SelectionChanged="Settings_Changed"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                            <TextBlock Text="Cảnh báo khi usage 5 giờ ≥" VerticalAlignment="Center" Width="190"/>
+                            <ComboBox x:Name="WarnCombo" Width="120" SelectionChanged="Settings_Changed"/>
+                        </StackPanel>
+                        <WrapPanel>
+                            <Button Content="Mở thư mục dữ liệu app" Click="OpenAppData_Click" Margin="0,0,8,8"/>
+                            <Button Content="Mở thư mục backup" Click="OpenBackups_Click" Margin="0,0,8,8"/>
+                        </WrapPanel>
+                        <TextBlock x:Name="LauncherInfo" Foreground="{StaticResource Muted}" TextWrapping="Wrap" FontSize="12" Margin="0,12,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <TextBlock Grid.Row="2" x:Name="StatusText" Foreground="{StaticResource Muted}" FontSize="12" Margin="2,10,0,0" TextTrimming="CharacterEllipsis"/>
+    </Grid>
+</Window>
