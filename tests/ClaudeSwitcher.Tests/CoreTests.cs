@@ -236,6 +236,13 @@ public class LinkRouterTests
         Assert.Equal(expected, LinkRouter.IsSignInLink(url));
 
     [Fact]
+    public void Log_line_drops_sign_in_secrets()
+    {
+        Assert.Equal("claude://magic-link", LinkRouter.Describe("claude://magic-link#secret:token"));
+        Assert.Equal("claude://sso-callback", LinkRouter.Describe("claude://sso-callback?code=secret"));
+    }
+
+    [Fact]
     public void Sign_in_link_goes_to_running_signed_out_profile()
     {
         var target = LinkRouter.PickTarget("claude://magic-link#a:b", All,

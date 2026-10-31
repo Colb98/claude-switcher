@@ -91,9 +91,14 @@ public static class LinkRouter
     {
         get
         {
-            using var key = Registry.CurrentUser.OpenSubKey(
-                $@"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\{Scheme}\UserChoice");
-            return key?.GetValue("ProgId") is string id && id.Equals(ProgId, StringComparison.OrdinalIgnoreCase);
+            // Newer Windows 11 builds keep the choice in UserChoiceLatest\ProgId instead of UserChoice.
+            var root = $@"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\{Scheme}";
+            foreach (var path in new[] { $@"{root}\UserChoiceLatest\ProgId", $@"{root}\UserChoice" })
+            {
+                using var key = Registry.CurrentUser.OpenSubKey(path);
+                if (key?.GetValue("ProgId") is string id) return id.Equals(ProgId, StringComparison.OrdinalIgnoreCase);
+            }
+            return false;
         }
     }
 
@@ -132,7 +137,26 @@ public static class LinkRouter
     {
         var running = InstanceManager.RunningInstances();
         var target = PickTarget(url, profiles, p => StartTime(running, p), IsSignedIn);
+        Log($"{Describe(url)} -> {target.Name}");
         InstanceManager.Launch(target, url);
+    }
+
+    /// <summary>The link without its query or fragment, which carry sign-in secrets.</summary>
+    public static string Describe(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var uri) ? $"{uri.Scheme}://{uri.Host}{uri.AbsolutePath.TrimEnd('/')}" : "(link không hợp lệ)";
+
+    public static string LogPath => System.IO.Path.Combine(ProfileStore.Root, "links.log");
+
+    /// <summary>Keeps a short history of where links went, so "it opened the wrong window" can be checked.</summary>
+    static void Log(string line)
+    {
+        try
+        {
+            System.IO.Directory.CreateDirectory(ProfileStore.Root);
+            var lines = System.IO.File.Exists(LogPath) ? System.IO.File.ReadAllLines(LogPath).TakeLast(199) : Enumerable.Empty<string>();
+            System.IO.File.WriteAllLines(LogPath, lines.Append($"{DateTime.Now:yyyy-MM-dd HH:mm:ss}  {line}"));
+        }
+        catch (Exception) { }
     }
 
     static DateTime? StartTime(Dictionary<string, int> running, ProfileConfig profile)
