@@ -11,14 +11,27 @@
 
 ## Cài đặt
 
-Chép `dist\ClaudeSwitcher.exe` vào một thư mục cố định (ví dụ `C:\Tools\ClaudeSwitcher\`) rồi chạy. Không cần cài .NET.
+Yêu cầu: Windows 10/11 và Claude Desktop đã cài sẵn.
+
+1. Build `dist\ClaudeSwitcher.exe` (xem [Build](#build)).
+2. Chép file exe vào một thư mục cố định (ví dụ `C:\Tools\ClaudeSwitcher\`) rồi chạy. Không cần cài .NET.
 
 > Nên chọn thư mục cố định **trước** khi bật "Khởi động cùng Windows", vì Windows lưu đường dẫn exe lúc bật.
 
-## Cách dùng
+## Bắt đầu nhanh
+
+1. Mở `ClaudeSwitcher.exe`. Tab **Profile** đã có sẵn profile "Mặc định", chính là Claude Desktop bạn đang dùng.
+2. Bấm **+ Profile mới**, đặt tên (ví dụ "Công việc") và chọn màu, rồi bấm **Tạo**.
+3. Khi app hỏi, bấm **Yes** để mở profile mới. Một cửa sổ Claude Desktop riêng hiện ra; đăng nhập tài khoản thứ hai trong cửa sổ đó.
+   - Nếu đăng nhập bằng link trong email, bật trước tuỳ chọn "Mở link đăng nhập đúng profile" (bước 5 trong [Cách dùng chi tiết](#cách-dùng-chi-tiết)).
+4. Sau vài giây, thẻ profile hiện email, gói và thanh usage 5 giờ / tuần của tài khoản đó.
+5. Từ giờ, mở profile nhanh nhất là **click trái icon Claude Switcher ở khay hệ thống** (góc phải taskbar; nếu không thấy, bấm mũi tên ^ cạnh đồng hồ). Một bảng nhỏ hiện danh sách profile kèm % usage 5 giờ; bấm một lần vào profile để mở nó, hoặc đưa cửa sổ của nó lên trước nếu đang chạy.
+6. Muốn app luôn sẵn sàng: vào tab **Cài đặt**, bật "Khởi động cùng Windows".
+
+## Cách dùng chi tiết
 
 1. **+ Profile mới:** đặt tên và chọn màu, sau đó bấm **Mở** rồi đăng nhập tài khoản Claude trong cửa sổ vừa hiện ra.
-2. Mỗi profile là một cửa sổ Claude Desktop riêng. Có thể mở nhiều profile cùng lúc.
+2. Mỗi profile là một cửa sổ Claude Desktop riêng. Có thể mở nhiều profile cùng lúc. Nút **⋯** trên thẻ profile có thêm: mở thư mục dữ liệu, tạo shortcut trên Desktop, xoá profile.
 3. **Chuyển session:**
    - Chọn profile nguồn và tick các session cần chuyển.
    - Chọn profile đích (đã đăng nhập ít nhất một lần), rồi bấm **Chuyển**.
@@ -27,7 +40,9 @@ Chép `dist\ClaudeSwitcher.exe` vào một thư mục cố định (ví dụ `C:
 4. **MCP dùng chung:** tick profile cho từng server rồi bấm **Áp dụng**. Chỉ profile có thay đổi mới bị đụng tới. Nếu profile đó đang chạy, app tắt nó, ghi cấu hình rồi mở lại, vì Claude Desktop đang mở sẽ ghi đè file cấu hình. MCP khai báo trong `~\.claude.json` (dùng cho session Code) vốn đã dùng chung cho mọi profile.
 5. **Cài đặt:** bật "Khởi động cùng Windows". Muốn một profile tự mở khi bật máy, bấm **Sửa** trên profile đó và tick "Tự mở khi khởi động".
    - **Mở link đăng nhập đúng profile:** Windows luôn mở link `claude://` (ví dụ link đăng nhập trong email) bằng profile Mặc định. Khi đăng nhập cho profile khác, cửa sổ Mặc định sẽ bị kẹt ở màn hình "Use verification code". Bật tuỳ chọn này thì Claude Switcher nhận link và chuyển link đăng nhập tới profile đang mở mà chưa đăng nhập; các link khác vẫn mở ở profile Mặc định. Windows không cho ứng dụng tự đặt mình làm trình mở link mặc định, nên khi bật, app mở sẵn trang Claude Switcher trong Settings → Default apps; bấm dòng CLAUDE và chọn Claude Switcher.
-6. **Khay hệ thống:** đóng cửa sổ chỉ thu app xuống khay. Muốn thoát hẳn, chuột phải icon ở khay và chọn **Thoát**.
+6. **Khay hệ thống:** đóng cửa sổ chỉ thu app xuống khay.
+   - **Click trái** icon: bảng chọn nhanh, bấm một lần để mở profile. Nút **Mở Claude Switcher** ở cuối bảng mở cửa sổ chính. Bấm ra ngoài hoặc nhấn Esc để đóng bảng.
+   - **Chuột phải** icon: menu đầy đủ (mở/tắt từng profile, làm mới usage, **Thoát** để tắt hẳn app).
 
 ### Dòng lệnh
 
