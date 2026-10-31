@@ -171,6 +171,9 @@ public static class Loc
         ["TrayReopen"] = ("Open it again from the system tray icon.", "Mở lại từ biểu tượng ở khay hệ thống."),
         ["PopupTitle"] = ("Open a profile", "Mở profile"),
         ["PopupUsageTip"] = ("5-hour usage", "Usage 5 giờ"),
+        ["PopupResetTip"] = ("5-hour usage, {0}", "Usage 5 giờ, {0}"),
+        ["PopupWeek"] = ("Week {0}", "Tuần {0}"),
+        ["PopupWeekTip"] = ("Weekly limit reached, {0}", "Đã hết hạn mức tuần, {0}"),
         ["PopupFocus"] = ("Bring the {0} window to the front", "Đưa cửa sổ {0} lên trước"),
         ["PopupOpen"] = ("Open {0}", "Mở {0}"),
 

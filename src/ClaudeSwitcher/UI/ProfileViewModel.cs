@@ -44,7 +44,7 @@ public sealed class UsageBar
         return b;
     }
 
-    static string FormatReset(DateTimeOffset t)
+    public static string FormatReset(DateTimeOffset t)
     {
         var local = t.LocalDateTime;
         var left = t - DateTimeOffset.Now;

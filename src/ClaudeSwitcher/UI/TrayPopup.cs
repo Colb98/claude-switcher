@@ -99,16 +99,7 @@ public sealed class TrayPopup : Window
         text.Children.Add(name);
         text.Children.Add(account);
 
-        var five = p.FiveHourPercent;
-        var usage = new TextBlock
-        {
-            Text = five >= 0 ? $"{five:0}%" : "",
-            FontSize = 12,
-            FontWeight = FontWeights.SemiBold,
-            VerticalAlignment = VerticalAlignment.Center,
-            ToolTip = Loc.T("PopupUsageTip"),
-        };
-        usage.SetResourceReference(TextBlock.ForegroundProperty, five >= 90 ? "Danger" : five >= 70 ? "Warn" : "Muted");
+        var usage = UsageColumn(p);
         var running = new Border
         {
             Width = 7, Height = 7, CornerRadius = new CornerRadius(3.5), Margin = new Thickness(8, 0, 0, 0),
@@ -143,6 +134,49 @@ public sealed class TrayPopup : Window
         row.MouseLeave += (_, _) => row.Background = Brushes.Transparent;
         row.MouseLeftButtonUp += (_, _) => { Hide(); _launch(p); };
         return row;
+    }
+
+    /// <summary>
+    /// 5-hour percent with its reset time underneath. When the weekly limit is used up it takes over the
+    /// column, since that is the wait that actually matters.
+    /// </summary>
+    static UIElement UsageColumn(ProfileViewModel p)
+    {
+        var five = p.Usage?.FiveHour;
+        var week = p.Usage?.Weekly;
+        var weekFull = week is { Percent: >= 100 };
+        var shown = weekFull ? week : five;
+
+        var column = new StackPanel { VerticalAlignment = VerticalAlignment.Center, MinWidth = 44 };
+        if (shown == null) return column;
+
+        var percent = new TextBlock
+        {
+            Text = weekFull ? Loc.T("PopupWeek", $"{shown.Percent:0}%") : $"{shown.Percent:0}%",
+            FontSize = 12,
+            FontWeight = FontWeights.SemiBold,
+            HorizontalAlignment = HorizontalAlignment.Right,
+        };
+        percent.SetResourceReference(TextBlock.ForegroundProperty, shown.Percent >= 90 ? "Danger" : shown.Percent >= 70 ? "Warn" : "Muted");
+        column.Children.Add(percent);
+
+        // A window that hasn't started (no reset time) or whose reset already passed shows no time.
+        if (shown.ResetsAt is { } at && at > DateTimeOffset.Now)
+        {
+            var reset = new TextBlock { Text = "↻ " + ShortTime(at), FontSize = 11, HorizontalAlignment = HorizontalAlignment.Right };
+            reset.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
+            column.Children.Add(reset);
+            var when = Loc.T("ResetAt", UsageBar.FormatReset(at));
+            column.ToolTip = weekFull ? Loc.T("PopupWeekTip", when) : Loc.T("PopupResetTip", when);
+        }
+        else column.ToolTip = weekFull ? Loc.T("WeekAll") : Loc.T("PopupUsageTip");
+        return column;
+    }
+
+    static string ShortTime(DateTimeOffset t)
+    {
+        var local = t.LocalDateTime;
+        return local - DateTime.Now < TimeSpan.FromHours(20) ? local.ToString("HH:mm") : local.ToString(@"dd\/MM");
     }
 
     /// <summary>Sits in the corner of the work area closest to the cursor, i.e. next to the taskbar's tray.</summary>
