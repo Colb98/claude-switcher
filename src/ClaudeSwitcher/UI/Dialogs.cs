@@ -26,7 +26,9 @@ public sealed class ProfileDialog : Window
         SizeToContent = SizeToContent.Height;
         ResizeMode = ResizeMode.NoResize;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        Background = (Brush)Application.Current.FindResource("Bg");
+        SetResourceReference(BackgroundProperty, "Bg");
+        SetResourceReference(ForegroundProperty, "Ink");
+        Theme.ApplyTitleBar(this);
         FontFamily = new FontFamily("Segoe UI");
         FontSize = 13;
 
@@ -95,7 +97,9 @@ public sealed class InputDialog : Window
         SizeToContent = SizeToContent.Height;
         ResizeMode = ResizeMode.NoResize;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        Background = (Brush)Application.Current.FindResource("Bg");
+        SetResourceReference(BackgroundProperty, "Bg");
+        SetResourceReference(ForegroundProperty, "Ink");
+        Theme.ApplyTitleBar(this);
         FontFamily = new FontFamily("Segoe UI");
         FontSize = 13;
 

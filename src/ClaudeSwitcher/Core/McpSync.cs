@@ -78,6 +78,24 @@ public static class McpSync
         return backup;
     }
 
+    /// <summary>Profiles whose current mcpServers differ from the selection, so untouched profiles are never restarted.</summary>
+    public static List<ProfileConfig> ProfilesNeedingChange(IEnumerable<ProfileConfig> profiles, IReadOnlyCollection<SharedMcpServer> servers)
+    {
+        var result = new List<ProfileConfig>();
+        foreach (var p in profiles)
+        {
+            var current = ReadServers(p.ResolveDataDir()).ToDictionary(s => s.Name, s => s.Def.ToJsonString());
+            var differs = servers.Any(s =>
+            {
+                var want = s.EnabledFor.TryGetValue(p.Id, out var on) && on;
+                var has = current.TryGetValue(s.Name, out var json);
+                return want ? !has || json != s.Definition.ToJsonString() : has;
+            });
+            if (differs) result.Add(p);
+        }
+        return result;
+    }
+
     /// <summary>A remote connector URL wrapped with mcp-remote so every profile can use it as a local server.</summary>
     public static JsonObject RemoteConnector(string url) => new()
     {

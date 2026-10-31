@@ -23,6 +23,8 @@ public partial class MainWindow : Window
 {
     static readonly int[] RefreshChoices = { 60, 120, 300, 600 };
     static readonly int[] WarnChoices = { 70, 80, 90, 95 };
+    static readonly (string Mode, string Label)[] ThemeChoices =
+        { (Theme.System, "Theo Windows"), (Theme.Light, "Sáng"), (Theme.Dark, "Tối") };
 
     public AppSettings Settings { get; }
     readonly ObservableCollection<ProfileViewModel> _profiles = new();
@@ -37,9 +39,17 @@ public partial class MainWindow : Window
     bool _exiting;
     bool _refreshing;
 
-    public MainWindow(bool fromStartup, string? screenshotPath)
+    public MainWindow(bool fromStartup, string? screenshotPath, string? themeOverride = null)
     {
+        Settings = ProfileStore.Load();
+        Theme.Apply(themeOverride ?? Settings.Theme);
         InitializeComponent();
+        Theme.ApplyTitleBar(this);
+        Microsoft.Win32.SystemEvents.UserPreferenceChanged += (_, e) =>
+        {
+            if (e.Category == Microsoft.Win32.UserPreferenceCategory.General && Settings.Theme == Theme.System)
+                Dispatcher.BeginInvoke(() => Theme.Apply(Theme.System));
+        };
         _screenshotPath = screenshotPath;
         if (screenshotPath != null)
         {
@@ -50,7 +60,6 @@ public partial class MainWindow : Window
             Left = -5000;
             Top = 0;
         }
-        Settings = ProfileStore.Load();
         ProfileStore.Save(Settings);
 
         ProfileList.ItemsSource = _profiles;
@@ -272,17 +281,30 @@ public partial class MainWindow : Window
         if (src.Id == dst.Id) { Error("Profile nguồn và đích phải khác nhau."); return; }
         var chosen = (SessionList.ItemsSource as IEnumerable<CodeSession>)?.Where(s => s.Selected).ToList() ?? new();
         if (chosen.Count == 0) { Error("Hãy tick ít nhất một session."); return; }
-        if (InstanceManager.FindMainProcess(dst.Config) != null)
+        var move = MoveSessions.IsChecked == true;
+        // A running Desktop keeps its sessions in memory and would write them back, so both ends must be closed.
+        var mustClose = new[] { dst }.Concat(move ? new[] { src } : Array.Empty<ProfileViewModel>())
+            .Where(p => InstanceManager.FindMainProcess(p.Config) != null).ToList();
+        if (mustClose.Count > 0)
         {
-            if (MessageBox.Show(this, $"Profile đích \"{dst.Name}\" đang chạy. Phải tắt nó để chép session.\nTắt ngay?",
+            var names = string.Join(", ", mustClose.Select(p => $"\"{p.Name}\""));
+            if (MessageBox.Show(this, $"Cần tắt {names} để chuyển session (Claude Desktop đang mở sẽ ghi đè thay đổi).\n" +
+                    "Các session khác đang chạy trong cửa sổ đó sẽ dừng. Tắt ngay?",
                     "Chuyển session", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
-            InstanceManager.Stop(dst.Config);
+            foreach (var p in mustClose) InstanceManager.Stop(p.Config);
+            RefreshRunning();
         }
         try
         {
             var n = SessionTransfer.CopyTo(chosen, dst.DataDir, OverwriteSessions.IsChecked == true);
             var skipped = chosen.Count - n;
             var msg = $"Đã chép {n} session sang \"{dst.Name}\"." + (skipped > 0 ? $" Bỏ qua {skipped} session đã có sẵn." : "");
+            if (move)
+            {
+                SessionTransfer.RemoveFromSource(chosen);
+                msg += $" Đã gỡ khỏi \"{src.Name}\" (bản gốc nằm trong thư mục backup).";
+                LoadSessions();
+            }
             if (MessageBox.Show(this, msg + "\n\nMở profile đích ngay để làm tiếp?", "Chuyển session",
                     MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
                 LaunchProfile(dst);
@@ -349,14 +371,25 @@ public partial class MainWindow : Window
 
     void McpApply_Click(object sender, RoutedEventArgs e)
     {
+        var servers = _mcpRows.Select(r => r.Server).ToList();
+        var changed = McpSync.ProfilesNeedingChange(Settings.Profiles, servers);
+        if (changed.Count == 0) { SetStatus("Cấu hình MCP không có gì thay đổi."); return; }
+
+        // A running Desktop rewrites claude_desktop_config.json from memory and would drop the change,
+        // so running profiles are closed, written, then reopened.
+        var running = _profiles.Where(p => changed.Contains(p.Config) && InstanceManager.FindMainProcess(p.Config) != null).ToList();
+        if (running.Count > 0 &&
+            MessageBox.Show(this, $"Cần khởi động lại {string.Join(", ", running.Select(p => $"\"{p.Name}\""))} để áp dụng MCP " +
+                "(Claude Desktop đang mở sẽ ghi đè cấu hình).\nCác session đang chạy trong cửa sổ đó sẽ dừng. Tiếp tục?",
+                "MCP dùng chung", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
+            return;
         try
         {
-            var backup = McpSync.Apply(Settings.Profiles, _mcpRows.Select(r => r.Server).ToList());
-            var running = _profiles.Where(p => p.IsRunning).Select(p => p.Name).ToList();
-            SetStatus("Đã áp dụng MCP. Backup: " + backup);
-            MessageBox.Show(this, "Đã ghi cấu hình MCP cho mọi profile." +
-                (running.Count > 0 ? $"\n\nKhởi động lại các profile đang chạy để nhận thay đổi: {string.Join(", ", running)}." : ""),
-                "MCP dùng chung", MessageBoxButton.OK, MessageBoxImage.Information);
+            foreach (var p in running) InstanceManager.Stop(p.Config);
+            var backup = McpSync.Apply(changed, servers);
+            foreach (var p in running) InstanceManager.Launch(p.Config);
+            RefreshRunning();
+            SetStatus($"Đã áp dụng MCP cho {string.Join(", ", changed.Select(p => p.Name))}. Backup: {backup}");
             ReloadMcp();
         }
         catch (Exception ex) { Error(ex.Message); }
@@ -367,6 +400,8 @@ public partial class MainWindow : Window
     void LoadSettingsUi()
     {
         _loadingSettings = true;
+        ThemeCombo.ItemsSource = ThemeChoices.Select(t => t.Label).ToList();
+        ThemeCombo.SelectedIndex = Math.Max(0, Array.FindIndex(ThemeChoices, t => t.Mode == Settings.Theme));
         StartWithWindows.IsChecked = StartupManager.IsEnabled;
         StartMinimized.IsChecked = Settings.StartMinimized;
         RefreshCombo.ItemsSource = RefreshChoices.Select(s => s < 120 ? $"{s} giây" : $"{s / 60} phút").ToList();
@@ -382,6 +417,14 @@ public partial class MainWindow : Window
         if (_loadingSettings) return;
         try { StartupManager.SetEnabled(StartWithWindows.IsChecked == true); SetStatus("Đã lưu cài đặt khởi động."); }
         catch (Exception ex) { Error(ex.Message); }
+    }
+
+    void Theme_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loadingSettings || ThemeCombo.SelectedIndex < 0) return;
+        Settings.Theme = ThemeChoices[ThemeCombo.SelectedIndex].Mode;
+        Theme.Apply(Settings.Theme);
+        ProfileStore.Save(Settings);
     }
 
     void Settings_Changed(object sender, RoutedEventArgs e)

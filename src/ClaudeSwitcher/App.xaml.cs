@@ -44,17 +44,22 @@ public partial class App : Application
             return;
         }
 
-        _mutex = new Mutex(true, MutexName, out var first);
-        if (!first)
+        // Screenshot runs are diagnostics and may run beside the user's own instance.
+        var screenshot = ArgValue(args, "--screenshot");
+        if (screenshot == null)
         {
-            if (EventWaitHandle.TryOpenExisting(ShowEventName, out var existing)) existing.Set();
-            Shutdown();
-            return;
+            _mutex = new Mutex(true, MutexName, out var first);
+            if (!first)
+            {
+                if (EventWaitHandle.TryOpenExisting(ShowEventName, out var existing)) existing.Set();
+                Shutdown();
+                return;
+            }
         }
-        _showEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName);
+        _showEvent = new EventWaitHandle(false, EventResetMode.AutoReset, screenshot == null ? ShowEventName : null);
 
         var startup = args.Contains(StartupManager.StartupArg);
-        var window = new MainWindow(startup, ArgValue(args, "--screenshot"));
+        var window = new MainWindow(startup, screenshot, ArgValue(args, "--theme"));
         MainWindow = window;
         if (!(startup && window.Settings.StartMinimized)) window.Show();
 

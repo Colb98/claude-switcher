@@ -81,4 +81,17 @@ public static class SessionTransfer
         }
         return copied;
     }
+
+    /// <summary>
+    /// Takes moved sessions out of the source profile so the same transcript is never resumed by two
+    /// instances at once. Files go to the backup folder rather than being deleted. The source must be closed,
+    /// or its running Desktop would write them back.
+    /// </summary>
+    public static string RemoveFromSource(IReadOnlyCollection<CodeSession> sessions)
+    {
+        var backup = ProfileStore.Backup("moved-sessions", sessions.Select(s => s.FilePath));
+        foreach (var s in sessions)
+            if (File.Exists(s.FilePath)) File.Delete(s.FilePath);
+        return backup;
+    }
 }

@@ -7,6 +7,7 @@
 - **Chuyển session Code** sang profile khác để làm tiếp khi hết usage. Lịch sử hội thoại được giữ nguyên.
 - **MCP dùng chung:** chọn MCP server nào dùng cho profile nào. Connector từ xa có thể thêm bằng URL.
 - **Khởi động cùng Windows:** app chạy ở khay hệ thống và tự mở các profile đã chọn.
+- **Giao diện sáng/tối:** chọn Sáng, Tối hoặc Theo Windows trong tab Cài đặt.
 
 ## Cài đặt
 
@@ -21,8 +22,9 @@ Chép `dist\ClaudeSwitcher.exe` vào một thư mục cố định (ví dụ `C:
 3. **Chuyển session:**
    - Chọn profile nguồn và tick các session cần chuyển.
    - Chọn profile đích (đã đăng nhập ít nhất một lần), rồi bấm **Chuyển**.
-   - App sẽ hỏi trước khi tắt profile đích nếu nó đang chạy, rồi mở lại khi chép xong.
-4. **MCP dùng chung:** tick profile cho từng server rồi bấm **Áp dụng**. Profile đang chạy cần khởi động lại để nhận thay đổi.
+   - "Chuyển hẳn" (mặc định bật) gỡ session khỏi profile nguồn, để không mở cùng một session ở hai cửa sổ (hai tiến trình sẽ cùng ghi vào một lịch sử). Bản gốc được giữ trong `backups\`.
+   - Claude Desktop đang mở sẽ ghi đè thay đổi, nên app hỏi trước khi tắt các profile liên quan, rồi đề nghị mở profile đích khi chép xong.
+4. **MCP dùng chung:** tick profile cho từng server rồi bấm **Áp dụng**. Chỉ profile có thay đổi mới bị đụng tới. Nếu profile đó đang chạy, app tắt nó, ghi cấu hình rồi mở lại, vì Claude Desktop đang mở sẽ ghi đè file cấu hình. MCP khai báo trong `~\.claude.json` (dùng cho session Code) vốn đã dùng chung cho mọi profile.
 5. **Cài đặt:** bật "Khởi động cùng Windows". Muốn một profile tự mở khi bật máy, bấm **Sửa** trên profile đó và tick "Tự mở khi khởi động".
 6. **Khay hệ thống:** đóng cửa sổ chỉ thu app xuống khay. Muốn thoát hẳn, chuột phải icon ở khay và chọn **Thoát**.
 
@@ -34,6 +36,7 @@ Chép `dist\ClaudeSwitcher.exe` vào một thư mục cố định (ví dụ `C:
 | `ClaudeSwitcher.exe --stop <id>` | Tắt một profile |
 | `ClaudeSwitcher.exe --selftest report.txt` | Kiểm tra: tìm Claude, đọc token, usage, session, MCP (không ghi token ra file) |
 | `ClaudeSwitcher.exe --startup` | Chế độ khởi động cùng Windows |
+| `ClaudeSwitcher.exe --screenshot ui.png [--theme dark]` | Render các tab ra ảnh PNG để kiểm tra giao diện, không chiếm focus |
 
 ## Dữ liệu
 

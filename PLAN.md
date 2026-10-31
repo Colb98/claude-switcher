@@ -64,7 +64,15 @@ src/ClaudeSwitcher/
 | Giao diện (`--screenshot`, render ngoài màn hình, không chiếm focus) | Đã xem 4 tab với 1 và 2 profile |
 | **Chưa kiểm chứng** | Chuyển session sang một tài khoản **khác** đã đăng nhập rồi chạy tiếp trong Claude Desktop (cần 2 tài khoản thật); bật "Khởi động cùng Windows" và tự mở profile sau khi khởi động lại máy; cảnh báo ngưỡng usage trên khay. |
 
-## 5. Giới hạn (không làm được hoặc chưa kiểm chứng)
+## 5. Kiểm tra thực tế lần 2 (2026-10-31, sau khi chuyển session này sang profile "Lộc Pro")
+
+- Session chạy đúng dưới tài khoản đích (account, org và email đều của profile đích), transcript được tiếp tục, Claude Desktop tự điền lại connector cho tài khoản mới.
+- **Lỗi:** cấu hình MCP ghi vào một profile đang chạy bị Claude Desktop ghi đè chỉ khoảng một phút sau. Đã sửa: chỉ áp dụng cho profile có thay đổi; profile đang chạy được tắt, ghi rồi mở lại.
+- **Rủi ro:** session vẫn còn ở profile nguồn sau khi chép, nên hai cửa sổ có thể cùng tiếp tục một transcript. Đã sửa: thêm tuỳ chọn "Chuyển hẳn" (mặc định bật), chuyển file của nguồn vào backup.
+- **Lỗi:** unit test ghi backup vào thư mục thật. Đã sửa bằng biến `CLAUDE_SWITCHER_HOME`.
+- Thêm giao diện tối (Sáng / Tối / Theo Windows, có thanh tiêu đề tối). Đã xem cả 4 tab ở hai chế độ.
+
+## 6. Giới hạn (không làm được hoặc chưa kiểm chứng)
 
 - **Chat thường trên claude.ai và Cowork** được lưu trên server hoặc trong VM theo từng tài khoản, nên không chuyển được giữa các tài khoản. Chỉ session **Code** chuyển được.
 - **Connector của claude.ai** không chép được giữa các tài khoản (chỉ dùng chung được qua `mcp-remote` như bước 7).

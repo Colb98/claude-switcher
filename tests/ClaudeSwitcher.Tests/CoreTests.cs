@@ -12,6 +12,10 @@ namespace ClaudeSwitcher.Tests;
 /// </summary>
 public sealed class FakeProfile : IDisposable
 {
+    // Keep backups written by the code under test out of the user's real ~/.claude-switcher.
+    static FakeProfile() => Environment.SetEnvironmentVariable("CLAUDE_SWITCHER_HOME",
+        Path.Combine(Path.GetTempPath(), "cs-test-home"));
+
     public string Dir { get; } = Path.Combine(Path.GetTempPath(), "cs-test-" + Guid.NewGuid().ToString("N")[..8]);
     readonly byte[] _key = RandomNumberGenerator.GetBytes(32);
 
@@ -136,6 +140,17 @@ public class SessionTransferTests
     }
 
     [Fact]
+    public void MoveRemovesSourceButKeepsBackup()
+    {
+        using var src = new FakeProfile();
+        var path = WriteSession(src.Dir, "s", "o", "s1", 1000);
+        var backup = SessionTransfer.RemoveFromSource(SessionTransfer.List(src.Dir));
+        Assert.False(File.Exists(path));
+        Assert.Empty(SessionTransfer.List(src.Dir));
+        Assert.Single(Directory.GetFiles(backup));
+    }
+
+    [Fact]
     public void SkipsExistingUnlessOverwrite()
     {
         using var src = new FakeProfile();
@@ -180,9 +195,12 @@ public class McpSyncTests
         Assert.True(unity.EnabledFor["a"]);
         Assert.False(unity.EnabledFor["b"]);
 
+        Assert.Empty(McpSync.ProfilesNeedingChange(profiles, servers));
         unity.EnabledFor["b"] = true;
+        Assert.Equal(new[] { "b" }, McpSync.ProfilesNeedingChange(profiles, servers).Select(p => p.Id));
         servers.Single(s => s.Name == "local-only").EnabledFor["a"] = false;
         McpSync.Apply(profiles, servers);
+        Assert.Empty(McpSync.ProfilesNeedingChange(profiles, servers));
 
         var ja = JsonNode.Parse(File.ReadAllText(Path.Combine(a.Dir, "claude_desktop_config.json")))!;
         var jb = JsonNode.Parse(File.ReadAllText(Path.Combine(b.Dir, "claude_desktop_config.json")))!;

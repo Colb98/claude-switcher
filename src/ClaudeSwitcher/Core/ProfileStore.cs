@@ -26,6 +26,8 @@ public sealed class AppSettings
     public bool StartMinimized { get; set; } = true;
     public int UsageRefreshSeconds { get; set; } = 120;
     public int WarnFiveHourPercent { get; set; } = 90;
+    /// <summary>"System", "Light" or "Dark".</summary>
+    public string Theme { get; set; } = "System";
 }
 
 /// <summary>
@@ -35,8 +37,11 @@ public sealed class AppSettings
 /// </summary>
 public static class ProfileStore
 {
-    public static readonly string Root = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".claude-switcher");
+    /// <summary>CLAUDE_SWITCHER_HOME overrides the location (used by tests so they never touch real data).</summary>
+    public static string Root =>
+        Environment.GetEnvironmentVariable("CLAUDE_SWITCHER_HOME") is { Length: > 0 } custom
+            ? custom
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".claude-switcher");
     public static string ProfilesRoot => Path.Combine(Root, "profiles");
     public static string BackupsRoot => Path.Combine(Root, "backups");
     static string SettingsPath => Path.Combine(Root, "settings.json");
