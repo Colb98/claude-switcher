@@ -44,6 +44,8 @@ public partial class MainWindow : Window
         Settings = ProfileStore.Load();
         Theme.Apply(themeOverride ?? Settings.Theme);
         InitializeComponent();
+        // The user may have just picked the default app in Settings; refresh the hint when they come back.
+        Activated += (_, _) => UpdateLinkHint();
         Theme.ApplyTitleBar(this);
         Microsoft.Win32.SystemEvents.UserPreferenceChanged += (_, e) =>
         {
@@ -401,6 +403,7 @@ public partial class MainWindow : Window
         StartWithWindows.IsChecked = StartupManager.IsEnabled;
         StartMinimized.IsChecked = Settings.StartMinimized;
         RouteLinks.IsChecked = LinkRouter.IsEnabled;
+        UpdateLinkHint();
         RefreshCombo.ItemsSource = RefreshChoices.Select(s => s < 120 ? $"{s} giây" : $"{s / 60} phút").ToList();
         RefreshCombo.SelectedIndex = Math.Max(0, Array.IndexOf(RefreshChoices, Settings.UsageRefreshSeconds));
         WarnCombo.ItemsSource = WarnChoices.Select(v => $"{v}%").ToList();
@@ -419,9 +422,27 @@ public partial class MainWindow : Window
     void RouteLinks_Changed(object sender, RoutedEventArgs e)
     {
         if (_loadingSettings) return;
-        try { LinkRouter.SetEnabled(RouteLinks.IsChecked == true); SetStatus("Đã lưu cài đặt mở link."); }
+        try
+        {
+            var enabled = RouteLinks.IsChecked == true;
+            LinkRouter.SetEnabled(enabled);
+            SetStatus("Đã lưu cài đặt mở link.");
+            if (enabled && !LinkRouter.IsWindowsDefault && MessageBox.Show(this,
+                    "Windows chỉ cho bạn tự chọn ứng dụng mở link claude://.\n\n" +
+                    "Bấm OK để mở trang Claude Switcher trong Settings → Default apps, " +
+                    "rồi bấm vào dòng CLAUDE và chọn Claude Switcher.",
+                    "Mở link đăng nhập đúng profile", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
+                LinkRouter.OpenDefaultAppsSettings();
+            UpdateLinkHint();
+        }
         catch (Exception ex) { Error(ex.Message); }
     }
+
+    void SetDefaultApp_Click(object sender, RoutedEventArgs e) => LinkRouter.OpenDefaultAppsSettings();
+
+    /// <summary>Shows the "set in Windows" button while the option is on but Windows still opens links in Claude.</summary>
+    void UpdateLinkHint() =>
+        SetDefaultApp.Visibility = RouteLinks.IsChecked == true && !LinkRouter.IsWindowsDefault ? Visibility.Visible : Visibility.Collapsed;
 
     void Theme_Changed(object sender, RoutedEventArgs e)
     {

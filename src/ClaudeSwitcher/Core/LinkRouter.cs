@@ -83,6 +83,25 @@ public static class LinkRouter
         }
     }
 
+    /// <summary>
+    /// Whether Windows' saved choice for claude:// is the switcher. Windows protects that choice with a
+    /// hash only it can write, so apps cannot set it themselves; the user picks it in Settings.
+    /// </summary>
+    public static bool IsWindowsDefault
+    {
+        get
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(
+                $@"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\{Scheme}\UserChoice");
+            return key?.GetValue("ProgId") is string id && id.Equals(ProgId, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    /// <summary>Opens Settings → Default apps on the switcher's own page, where claude:// can be assigned to it.</summary>
+    public static void OpenDefaultAppsSettings() =>
+        Process.Start(new ProcessStartInfo($"ms-settings:defaultapps?registeredAppUser={Uri.EscapeDataString(AppName)}")
+            { UseShellExecute = true });
+
     public static bool IsSignInLink(string url)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || !uri.Scheme.Equals(Scheme, StringComparison.OrdinalIgnoreCase))
