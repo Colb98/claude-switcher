@@ -141,15 +141,9 @@ public partial class MainWindow : Window
     {
         try
         {
-            if (InstanceManager.FindMainProcess(p.Config) != null)
-            {
-                SetStatus(InstanceManager.BringToFront(p.Config)
-                    ? $"Đã đưa cửa sổ {p.Name} lên trước."
-                    : $"{p.Name} đang chạy nhưng chưa tìm thấy cửa sổ của nó, thử lại sau vài giây.");
-                return;
-            }
+            var running = InstanceManager.FindMainProcess(p.Config) != null;
             InstanceManager.Launch(p.Config);
-            SetStatus($"Đang mở {p.Name}…");
+            SetStatus(running ? $"Đang đưa cửa sổ {p.Name} lên trước…" : $"Đang mở {p.Name}…");
         }
         catch (Exception ex) { Error(ex.Message); }
     }
