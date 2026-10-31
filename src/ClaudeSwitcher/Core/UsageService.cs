@@ -40,8 +40,8 @@ public sealed class UsageService
     {
         IReadOnlyList<DesktopCredential> creds;
         try { creds = DesktopSecrets.ReadCredentials(dataDir); }
-        catch (Exception e) { return UsageReport.Fail(UsageStatus.Failed, "Không đọc được token: " + e.Message); }
-        if (creds.Count == 0) return UsageReport.Fail(UsageStatus.SignedOut, "Chưa đăng nhập");
+        catch (Exception e) { return UsageReport.Fail(UsageStatus.Failed, Loc.T("TokenReadFailed", e.Message)); }
+        if (creds.Count == 0) return UsageReport.Fail(UsageStatus.SignedOut, Loc.T("SignedOut"));
 
         try
         {
@@ -54,7 +54,7 @@ public sealed class UsageService
             }
             if (cred == null || usage == null)
                 return UsageReport.Fail(UsageStatus.TokenExpired,
-                    creds.All(c => c.IsExpired) ? "Token hết hạn, mở profile để làm mới" : "Token bị từ chối, mở profile để làm mới");
+                    creds.All(c => c.IsExpired) ? Loc.T("TokenExpired") : Loc.T("TokenRejected"));
             var (email, plan) = await GetIdentity(dataDir, cred, ct);
 
             var scoped = new List<UsageWindow>();
@@ -65,23 +65,23 @@ public sealed class UsageService
                     var name = (string?)l["scope"]?["model"]?["display_name"]
                                ?? (string?)l["scope"]?["surface"]?["display_name"];
                     if (string.IsNullOrWhiteSpace(name)) continue;
-                    scoped.Add(new UsageWindow($"Tuần ({name.Trim()})",
+                    scoped.Add(new UsageWindow(Loc.T("WeekModel", name.Trim()),
                         l["percent"]?.GetValue<double>() ?? 0, ParseTime(l["resets_at"])));
                 }
             if (scoped.Count == 0)
             {
-                AddLegacy(scoped, usage, "seven_day_sonnet", "Tuần (Sonnet)");
-                AddLegacy(scoped, usage, "seven_day_opus", "Tuần (Opus)");
+                AddLegacy(scoped, usage, "seven_day_sonnet", Loc.T("WeekModel", "Sonnet"));
+                AddLegacy(scoped, usage, "seven_day_opus", Loc.T("WeekModel", "Opus"));
             }
 
             return new UsageReport(UsageStatus.Ok, null,
-                Window(usage["five_hour"], "5 giờ"),
-                Window(usage["seven_day"], "Tuần (mọi model)"),
+                Window(usage["five_hour"], Loc.T("FiveHour")),
+                Window(usage["seven_day"], Loc.T("WeekAll")),
                 scoped, email, plan ?? FormatPlan(cred), DateTimeOffset.Now);
         }
         catch (Exception e) when (e is HttpRequestException or TaskCanceledException)
         {
-            return UsageReport.Fail(UsageStatus.Failed, "Lỗi mạng: " + e.Message);
+            return UsageReport.Fail(UsageStatus.Failed, Loc.T("NetworkError", e.Message));
         }
     }
 

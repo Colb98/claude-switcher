@@ -12,7 +12,7 @@ public sealed class ProfileDialog : Window
     static readonly string[] Palette = { "#D97757", "#4C7BD9", "#4C8C5A", "#9A5BC9", "#C98A2B", "#2E9AA6", "#C94F7C", "#6F6A60" };
 
     readonly TextBox _name = new() { FontSize = 14, Padding = new Thickness(6, 4, 6, 4) };
-    readonly CheckBox _autoStart = new() { Content = "Tự mở khi khởi động cùng Windows", Margin = new Thickness(0, 14, 0, 0) };
+    readonly CheckBox _autoStart = new() { Content = Loc.T("AutoStart"), Margin = new Thickness(0, 14, 0, 0) };
     readonly WrapPanel _swatches = new() { Margin = new Thickness(0, 6, 0, 0) };
 
     public string ProfileName => _name.Text.Trim();
@@ -21,7 +21,7 @@ public sealed class ProfileDialog : Window
 
     public ProfileDialog(ProfileConfig? existing)
     {
-        Title = existing == null ? "Profile mới" : "Sửa profile";
+        Title = existing == null ? Loc.T("NewProfileTitle") : Loc.T("EditProfileTitle");
         Width = 420;
         SizeToContent = SizeToContent.Height;
         ResizeMode = ResizeMode.NoResize;
@@ -37,28 +37,28 @@ public sealed class ProfileDialog : Window
         ProfileColor = existing?.Color ?? Palette[1];
         BuildSwatches();
 
-        var ok = new Button { Content = existing == null ? "Tạo" : "Lưu", IsDefault = true, Style = (Style)Application.Current.FindResource("Primary"), Margin = new Thickness(8, 0, 0, 0) };
+        var ok = new Button { Content = existing == null ? Loc.T("Create") : Loc.T("Save"), IsDefault = true, Style = (Style)Application.Current.FindResource("Primary"), Margin = new Thickness(8, 0, 0, 0) };
         ok.Click += (_, _) =>
         {
-            if (ProfileName.Length == 0) { MessageBox.Show(this, "Hãy nhập tên profile."); return; }
+            if (ProfileName.Length == 0) { MessageBox.Show(this, Loc.T("EnterName")); return; }
             DialogResult = true;
         };
-        var cancel = new Button { Content = "Huỷ", IsCancel = true };
+        var cancel = new Button { Content = Loc.T("Cancel"), IsCancel = true };
 
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 20, 0, 0) };
         buttons.Children.Add(cancel);
         buttons.Children.Add(ok);
 
         var panel = new StackPanel { Margin = new Thickness(20) };
-        panel.Children.Add(new TextBlock { Text = "Tên profile" });
+        panel.Children.Add(new TextBlock { Text = Loc.T("ProfileName") });
         panel.Children.Add(_name);
-        panel.Children.Add(new TextBlock { Text = "Màu", Margin = new Thickness(0, 14, 0, 0) });
+        panel.Children.Add(new TextBlock { Text = Loc.T("Color"), Margin = new Thickness(0, 14, 0, 0) });
         panel.Children.Add(_swatches);
         panel.Children.Add(_autoStart);
         if (existing == null)
             panel.Children.Add(new TextBlock
             {
-                Text = "Profile mới có thư mục dữ liệu riêng. Lần đầu mở, hãy đăng nhập tài khoản Claude muốn dùng cho profile này.",
+                Text = Loc.T("NewProfileHint"),
                 TextWrapping = TextWrapping.Wrap, Foreground = (Brush)Application.Current.FindResource("Muted"), Margin = new Thickness(0, 12, 0, 0)
             });
         panel.Children.Add(buttons);
@@ -111,7 +111,7 @@ public sealed class InputDialog : Window
         };
         var ok = new Button { Content = "OK", IsDefault = !multiline, Style = (Style)Application.Current.FindResource("Primary"), Margin = new Thickness(8, 0, 0, 0) };
         ok.Click += (_, _) => DialogResult = true;
-        var cancel = new Button { Content = "Huỷ", IsCancel = true };
+        var cancel = new Button { Content = Loc.T("Cancel"), IsCancel = true };
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 16, 0, 0) };
         buttons.Children.Add(cancel);
         buttons.Children.Add(ok);

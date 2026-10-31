@@ -10,7 +10,7 @@
     <AssemblyName>ClaudeSwitcher</AssemblyName>
     <RootNamespace>ClaudeSwitcher</RootNamespace>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
     <Product>Claude Switcher</Product>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <InvariantGlobalization>false</InvariantGlobalization>

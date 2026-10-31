@@ -28,6 +28,8 @@ public sealed class AppSettings
     public int WarnFiveHourPercent { get; set; } = 90;
     /// <summary>"System", "Light" or "Dark".</summary>
     public string Theme { get; set; } = "System";
+    /// <summary>"en" or "vi".</summary>
+    public string Language { get; set; } = Loc.English;
 }
 
 /// <summary>
@@ -63,7 +65,7 @@ public static class ProfileStore
             settings = new AppSettings();
         }
         if (!settings.Profiles.Any(p => p.IsDefault))
-            settings.Profiles.Insert(0, new ProfileConfig { Id = "default", Name = "Mặc định", Color = "#D97757" });
+            settings.Profiles.Insert(0, new ProfileConfig { Id = "default", Name = Loc.T("DefaultProfile"), Color = "#D97757" });
         return settings;
     }
 

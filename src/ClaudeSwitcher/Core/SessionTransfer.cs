@@ -44,7 +44,7 @@ public static class SessionTransfer
                 {
                     FilePath = file,
                     SessionId = (string?)j["sessionId"] ?? Path.GetFileNameWithoutExtension(file),
-                    Title = (string?)j["title"] ?? "(không có tiêu đề)",
+                    Title = (string?)j["title"] ?? Loc.T("Untitled"),
                     Cwd = (string?)j["cwd"] ?? "",
                     LastActivity = DateTimeOffset.FromUnixTimeMilliseconds((long)last),
                     IsArchived = j["isArchived"]?.GetValue<bool>() ?? false,
@@ -59,7 +59,7 @@ public static class SessionTransfer
     public static int CopyTo(IEnumerable<CodeSession> sessions, string targetDataDir, bool overwrite)
     {
         var cred = DesktopSecrets.ReadCredential(targetDataDir)
-            ?? throw new InvalidOperationException("Profile đích chưa đăng nhập. Hãy mở và đăng nhập profile đích một lần trước.");
+            ?? throw new InvalidOperationException(Loc.T("TargetSignedOut"));
         var targetDir = Path.Combine(targetDataDir, SessionsFolder, cred.AccountUuid, cred.OrgUuid);
         Directory.CreateDirectory(targetDir);
 

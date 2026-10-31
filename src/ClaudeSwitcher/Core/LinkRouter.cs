@@ -65,7 +65,7 @@ public static class LinkRouter
             using (var caps = cu.CreateSubKey(CapabilitiesKey))
             {
                 caps.SetValue("ApplicationName", AppName);
-                caps.SetValue("ApplicationDescription", "Mở link claude:// đúng profile Claude Desktop");
+                caps.SetValue("ApplicationDescription", Loc.T("LinkDescription"));
                 using var urls = caps.CreateSubKey("URLAssociations");
                 urls.SetValue(Scheme, ProgId);
             }
@@ -143,7 +143,7 @@ public static class LinkRouter
 
     /// <summary>The link without its query or fragment, which carry sign-in secrets.</summary>
     public static string Describe(string url) =>
-        Uri.TryCreate(url, UriKind.Absolute, out var uri) ? $"{uri.Scheme}://{uri.Host}{uri.AbsolutePath.TrimEnd('/')}" : "(link không hợp lệ)";
+        Uri.TryCreate(url, UriKind.Absolute, out var uri) ? $"{uri.Scheme}://{uri.Host}{uri.AbsolutePath.TrimEnd('/')}" : Loc.T("BadLink");
 
     public static string LogPath => System.IO.Path.Combine(ProfileStore.Root, "links.log");
 

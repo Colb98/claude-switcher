@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using ClaudeSwitcher.Core;
 using Forms = System.Windows.Forms;
 
 namespace ClaudeSwitcher.UI;
@@ -35,10 +36,10 @@ public sealed class TrayPopup : Window
         FontSize = 13;
         SetResourceReference(ForegroundProperty, "Ink");
 
-        var title = new TextBlock { Text = "Mở profile", FontWeight = FontWeights.SemiBold, Margin = new Thickness(10, 2, 0, 8) };
+        var title = new TextBlock { Text = Loc.T("PopupTitle"), FontWeight = FontWeights.SemiBold, Margin = new Thickness(10, 2, 0, 8) };
         title.SetResourceReference(TextBlock.ForegroundProperty, "Muted");
 
-        var open = new Button { Content = "Mở Claude Switcher", Style = (Style)Application.Current.FindResource("Small"), HorizontalAlignment = HorizontalAlignment.Stretch };
+        var open = new Button { Content = Loc.T("TrayOpenApp"), Style = (Style)Application.Current.FindResource("Small"), HorizontalAlignment = HorizontalAlignment.Stretch };
         open.Click += (_, _) => { Hide(); _openMain(); };
 
         var panel = new StackPanel();
@@ -105,14 +106,14 @@ public sealed class TrayPopup : Window
             FontSize = 12,
             FontWeight = FontWeights.SemiBold,
             VerticalAlignment = VerticalAlignment.Center,
-            ToolTip = "Usage 5 giờ",
+            ToolTip = Loc.T("PopupUsageTip"),
         };
         usage.SetResourceReference(TextBlock.ForegroundProperty, five >= 90 ? "Danger" : five >= 70 ? "Warn" : "Muted");
         var running = new Border
         {
             Width = 7, Height = 7, CornerRadius = new CornerRadius(3.5), Margin = new Thickness(8, 0, 0, 0),
             VerticalAlignment = VerticalAlignment.Center, Visibility = p.IsRunning ? Visibility.Visible : Visibility.Hidden,
-            ToolTip = "Đang chạy",
+            ToolTip = Loc.T("Running"),
         };
         running.SetResourceReference(Border.BackgroundProperty, "Ok");
 
@@ -136,7 +137,7 @@ public sealed class TrayPopup : Window
             CornerRadius = new CornerRadius(7),
             Background = Brushes.Transparent,
             Cursor = Cursors.Hand,
-            ToolTip = p.IsRunning ? $"Đưa cửa sổ {p.Name} lên trước" : $"Mở {p.Name}",
+            ToolTip = p.IsRunning ? Loc.T("PopupFocus", p.Name) : Loc.T("PopupOpen", p.Name),
         };
         row.MouseEnter += (_, _) => row.SetResourceReference(Border.BackgroundProperty, "Hover");
         row.MouseLeave += (_, _) => row.Background = Brushes.Transparent;

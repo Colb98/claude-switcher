@@ -1,78 +1,84 @@
 # Claude Switcher
 
-Ứng dụng Windows để chạy nhiều cửa sổ **Claude Desktop** cùng lúc, mỗi cửa sổ đăng nhập một tài khoản riêng.
+**English** | [Tiếng Việt](README.vi.md)
 
-- **Profile:** mỗi profile có thư mục dữ liệu riêng, nên đăng nhập, cài đặt và session đều tách biệt. Profile "Mặc định" là Claude Desktop bạn đang dùng, dữ liệu gốc giữ nguyên.
-- **Usage thời gian thực:** hiển thị usage 5 giờ, tuần (mọi model) và tuần theo từng model, kèm giờ reset của từng tài khoản. Số liệu lấy giống hệt cách Claude Desktop lấy: gọi `api.anthropic.com/api/oauth/usage` bằng token của chính profile đó, không đọc file lịch sử. Khi usage 5 giờ vượt ngưỡng, app hiện cảnh báo và gợi ý profile còn nhiều usage nhất.
-- **Chuyển session Code** sang profile khác để làm tiếp khi hết usage. Lịch sử hội thoại được giữ nguyên.
-- **MCP dùng chung:** chọn MCP server nào dùng cho profile nào. Connector từ xa có thể thêm bằng URL.
-- **Khởi động cùng Windows:** app chạy ở khay hệ thống và tự mở các profile đã chọn.
-- **Giao diện sáng/tối:** chọn Sáng, Tối hoặc Theo Windows trong tab Cài đặt.
+A Windows app for running several **Claude Desktop** windows at once, each signed in to a different account.
 
-## Cài đặt
+- **Profiles:** each profile has its own data folder, so sign-in, settings and sessions stay separate. The "Default" profile is the Claude Desktop you already use, and its original data is left untouched.
+- **Live usage:** shows 5-hour, weekly (all models) and per-model weekly usage, with reset times, for every account. The numbers come from the same place Claude Desktop gets them: a call to `api.anthropic.com/api/oauth/usage` with that profile's own token, not from history files. When 5-hour usage crosses your threshold, the app warns you and suggests the profile with the most usage left.
+- **Move Code sessions** to another profile to keep working when you run out of usage. The conversation history is kept.
+- **Shared MCP:** choose which MCP servers each profile uses. Remote connectors can be added by URL.
+- **Start with Windows:** the app runs in the system tray and opens the profiles you picked.
+- **Light/dark theme:** choose Light, Dark or Match Windows in the Settings tab.
+- **English / Vietnamese:** the app starts in English. Switch with **Settings → Language**; the UI changes right away, no restart needed.
 
-Yêu cầu: Windows 10/11 và Claude Desktop đã cài sẵn.
+## Install
 
-1. Tải `ClaudeSwitcher.exe` từ trang [Releases](https://github.com/Colb98/claude-switcher/releases/latest), hoặc tự build ra `dist\ClaudeSwitcher.exe` (xem [Build](#build)).
-2. Chép file exe vào một thư mục cố định (ví dụ `C:\Tools\ClaudeSwitcher\`) rồi chạy. Không cần cài .NET.
+Requirements: Windows 10/11 with Claude Desktop installed.
 
-> Nên chọn thư mục cố định **trước** khi bật "Khởi động cùng Windows", vì Windows lưu đường dẫn exe lúc bật.
+1. Download `ClaudeSwitcher.exe` from the [Releases](https://github.com/Colb98/claude-switcher/releases/latest) page, or build `dist\ClaudeSwitcher.exe` yourself (see [Build](#build)).
+2. Copy the exe to a permanent folder (for example `C:\Tools\ClaudeSwitcher\`) and run it. No .NET install needed.
 
-## Bắt đầu nhanh
+> Pick the permanent folder **before** turning on "Start with Windows", because Windows saves the exe path at that moment.
 
-1. Mở `ClaudeSwitcher.exe`. Tab **Profile** đã có sẵn profile "Mặc định", chính là Claude Desktop bạn đang dùng.
-2. Bấm **+ Profile mới**, đặt tên (ví dụ "Công việc") và chọn màu, rồi bấm **Tạo**.
-3. Khi app hỏi, bấm **Yes** để mở profile mới. Một cửa sổ Claude Desktop riêng hiện ra; đăng nhập tài khoản thứ hai trong cửa sổ đó.
-   - Nếu đăng nhập bằng link trong email, bật trước tuỳ chọn "Mở link đăng nhập đúng profile" (bước 5 trong [Cách dùng chi tiết](#cách-dùng-chi-tiết)).
-4. Sau vài giây, thẻ profile hiện email, gói và thanh usage 5 giờ / tuần của tài khoản đó.
-5. Từ giờ, mở profile nhanh nhất là **click trái icon Claude Switcher ở khay hệ thống** (góc phải taskbar; nếu không thấy, bấm mũi tên ^ cạnh đồng hồ). Một bảng nhỏ hiện danh sách profile kèm % usage 5 giờ; bấm một lần vào profile để mở nó, hoặc đưa cửa sổ của nó lên trước nếu đang chạy.
-6. Muốn app luôn sẵn sàng: vào tab **Cài đặt**, bật "Khởi động cùng Windows".
+> The exe is not code-signed, so Windows SmartScreen may warn on first run: click **More info → Run anyway**.
 
-## Cách dùng chi tiết
+## Quick start
 
-1. **+ Profile mới:** đặt tên và chọn màu, sau đó bấm **Mở** rồi đăng nhập tài khoản Claude trong cửa sổ vừa hiện ra.
-2. Mỗi profile là một cửa sổ Claude Desktop riêng. Có thể mở nhiều profile cùng lúc. Nút **⋯** trên thẻ profile có thêm: mở thư mục dữ liệu, tạo shortcut trên Desktop, xoá profile.
-3. **Chuyển session:**
-   - Chọn profile nguồn và tick các session cần chuyển.
-   - Chọn profile đích (đã đăng nhập ít nhất một lần), rồi bấm **Chuyển**.
-   - "Chuyển hẳn" (mặc định bật) gỡ session khỏi profile nguồn, để không mở cùng một session ở hai cửa sổ (hai tiến trình sẽ cùng ghi vào một lịch sử). Bản gốc được giữ trong `backups\`.
-   - Claude Desktop đang mở sẽ ghi đè thay đổi, nên app hỏi trước khi tắt các profile liên quan, rồi đề nghị mở profile đích khi chép xong.
-4. **MCP dùng chung:** tick profile cho từng server rồi bấm **Áp dụng**. Chỉ profile có thay đổi mới bị đụng tới. Nếu profile đó đang chạy, app tắt nó, ghi cấu hình rồi mở lại, vì Claude Desktop đang mở sẽ ghi đè file cấu hình. MCP khai báo trong `~\.claude.json` (dùng cho session Code) vốn đã dùng chung cho mọi profile.
-5. **Cài đặt:** bật "Khởi động cùng Windows". Muốn một profile tự mở khi bật máy, bấm **Sửa** trên profile đó và tick "Tự mở khi khởi động".
-   - **Mở link đăng nhập đúng profile:** Windows luôn mở link `claude://` (ví dụ link đăng nhập trong email) bằng profile Mặc định. Khi đăng nhập cho profile khác, cửa sổ Mặc định sẽ bị kẹt ở màn hình "Use verification code". Bật tuỳ chọn này thì Claude Switcher nhận link và chuyển link đăng nhập tới profile đang mở mà chưa đăng nhập; các link khác vẫn mở ở profile Mặc định. Windows không cho ứng dụng tự đặt mình làm trình mở link mặc định, nên khi bật, app mở sẵn trang Claude Switcher trong Settings → Default apps; bấm dòng CLAUDE và chọn Claude Switcher.
-6. **Khay hệ thống:** đóng cửa sổ chỉ thu app xuống khay.
-   - **Click trái** icon: bảng chọn nhanh, bấm một lần để mở profile. Nút **Mở Claude Switcher** ở cuối bảng mở cửa sổ chính. Bấm ra ngoài hoặc nhấn Esc để đóng bảng.
-   - **Chuột phải** icon: menu đầy đủ (mở/tắt từng profile, làm mới usage, **Thoát** để tắt hẳn app).
+1. Open `ClaudeSwitcher.exe`. The **Profiles** tab already has a "Default" profile, which is the Claude Desktop you already use.
+2. Click **+ New profile**, enter a name (for example "Work"), pick a color, and click **Create**.
+3. When asked, click **Yes** to open the new profile. A separate Claude Desktop window appears; sign in to your second account there.
+   - If you sign in with an email link, first turn on "Open sign-in links in the right profile" (step 5 in [Detailed usage](#detailed-usage)).
+4. After a few seconds, the profile card shows that account's email, plan, and 5-hour / weekly usage bars.
+5. From now on, the fastest way to open a profile is to **left-click the Claude Switcher icon in the system tray** (bottom-right of the taskbar; if you don't see it, click the ^ arrow next to the clock). A small panel lists your profiles with their 5-hour usage; click a profile once to open it, or to bring its window to the front if it is already running.
+6. To keep the app always ready: in the **Settings** tab, turn on "Start with Windows".
 
-### Dòng lệnh
+## Detailed usage
 
-| Lệnh | Tác dụng |
+1. **+ New profile:** enter a name and pick a color, then click **Open** and sign in to a Claude account in the window that appears.
+2. Each profile is its own Claude Desktop window, and several can be open at once. The **⋯** button on a profile card also lets you open its data folder, create a desktop shortcut, or delete the profile.
+3. **Move sessions:**
+   - Pick the source profile and tick the sessions to move.
+   - Pick the target profile (it must have signed in at least once), then click **Move selected sessions**.
+   - "Move" (on by default) removes the sessions from the source profile, so the same session is never open in two windows (two processes would write to one history). The original is kept in `backups\`.
+   - An open Claude Desktop would overwrite the change, so the app asks before closing the profiles involved, then offers to open the target profile when the copy is done.
+4. **Shared MCP:** tick the profiles for each server, then click **Apply**. Only profiles with changes are touched. If such a profile is running, the app closes it, writes the config and reopens it, because an open Claude Desktop would overwrite its config file. MCP servers declared in `~\.claude.json` (used by Code sessions) are already shared by every profile.
+5. **Settings:** turn on "Start with Windows". To have a profile open when you sign in to Windows, click **Edit** on that profile and tick "Open at startup with Windows".
+   - **Open sign-in links in the right profile:** Windows always opens `claude://` links (such as the sign-in link in an email) in the Default profile. When you sign in to another profile, the Default window gets stuck on the "Use verification code" screen. With this option on, Claude Switcher receives the link and sends sign-in links to the open profile that has not signed in yet; other links still open in the Default profile. Windows doesn't let an app make itself the default link handler, so when you turn this on the app opens Claude Switcher's page in Settings → Default apps; click the CLAUDE row and choose Claude Switcher.
+   - **Language:** English or Tiếng Việt.
+6. **System tray:** closing the window only hides the app to the tray.
+   - **Left-click** the icon: a quick picker; click a profile once to open it. The **Open Claude Switcher** button at the bottom opens the main window. Click outside or press Esc to close the picker.
+   - **Right-click** the icon: the full menu (open/stop each profile, refresh usage, **Exit** to quit the app).
+
+### Command line
+
+| Command | What it does |
 |---|---|
-| `ClaudeSwitcher.exe --launch <id>` | Mở một profile (dùng cho shortcut; nút "⋯ → Tạo shortcut" tạo sẵn) |
-| `ClaudeSwitcher.exe --stop <id>` | Tắt một profile |
-| `ClaudeSwitcher.exe --selftest report.txt` | Kiểm tra: tìm Claude, đọc token, usage, session, MCP (không ghi token ra file) |
-| `ClaudeSwitcher.exe --open-url <link>` | Mở một link `claude://` ở đúng profile (Windows tự gọi khi bật "Mở link đăng nhập đúng profile") |
-| `ClaudeSwitcher.exe --startup` | Chế độ khởi động cùng Windows |
-| `ClaudeSwitcher.exe --screenshot ui.png [--theme dark]` | Render các tab ra ảnh PNG để kiểm tra giao diện, không chiếm focus |
+| `ClaudeSwitcher.exe --launch <id>` | Open one profile (used by shortcuts; "⋯ → Create desktop shortcut" makes one) |
+| `ClaudeSwitcher.exe --stop <id>` | Close one profile |
+| `ClaudeSwitcher.exe --selftest report.txt` | Check: find Claude, read tokens, usage, sessions, MCP (tokens are never written to the file) |
+| `ClaudeSwitcher.exe --open-url <link>` | Open a `claude://` link in the right profile (Windows calls this when "Open sign-in links in the right profile" is on) |
+| `ClaudeSwitcher.exe --startup` | Start-with-Windows mode |
+| `ClaudeSwitcher.exe --screenshot ui.png [--theme dark] [--lang vi]` | Render every tab to PNG to review the UI, without taking focus |
 
-## Dữ liệu
+## Data
 
-- App và các profile mới: `%USERPROFILE%\.claude-switcher\` (`settings.json`, `profiles\`, `backups\`).
-  Thư mục này nằm ngoài AppData vì Claude Desktop bản MSIX ảo hoá việc ghi file vào AppData.
-- Mọi thao tác ghi vào dữ liệu Claude (MCP, ghi đè session) đều được backup vào `backups\` trước.
+- App and new profiles: `%USERPROFILE%\.claude-switcher\` (`settings.json`, `profiles\`, `backups\`).
+  This folder lives outside AppData because the MSIX build of Claude Desktop virtualizes file writes under AppData.
+- Every write to Claude's data (MCP, overwriting sessions) is backed up to `backups\` first.
 
-## Giới hạn
+## Limitations
 
-- Chỉ **session Code** chuyển được. Chat thường và Cowork được lưu theo tài khoản trên server nên không chuyển được.
-- Connector của claude.ai gắn với tài khoản. Muốn dùng chung, thêm connector bằng URL (qua `mcp-remote`).
-- Token của một profile được Claude Desktop tự làm mới khi profile đó đang mở. Nếu profile tắt quá lâu, thẻ sẽ báo "Token hết hạn"; mở profile đó một lần là số liệu cập nhật lại.
-- App dựa vào định dạng dữ liệu nội bộ của Claude Desktop (khảo sát trên bản 4.4212). Bản cập nhật sau có thể thay đổi định dạng này; khi đó hãy chạy `--selftest` để kiểm tra.
+- Only **Code sessions** can be moved. Regular chats and Cowork are stored per account on the server.
+- claude.ai connectors belong to an account. To share one, add it by URL (through `mcp-remote`).
+- Claude Desktop refreshes a profile's token while that profile is open. If a profile stays closed too long, its card shows "Token expired"; open that profile once and the numbers update again.
+- The app relies on Claude Desktop's internal data format (studied on version 4.4212). Later updates may change it; if something breaks, run `--selftest` to check.
 
 ## Build
 
 ```powershell
-tools\publish.ps1        # ra dist\ClaudeSwitcher.exe
+tools\publish.ps1        # produces dist\ClaudeSwitcher.exe
 dotnet test tests\ClaudeSwitcher.Tests
 ```
 
-Kế hoạch và kết quả khảo sát kỹ thuật: [PLAN.md](PLAN.md).
+Plan and technical findings (Vietnamese): [PLAN.md](PLAN.md).

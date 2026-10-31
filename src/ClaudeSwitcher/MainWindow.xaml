@@ -13,17 +13,17 @@
 
         <DockPanel Margin="0,0,0,12">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="Làm mới usage" Click="RefreshUsage_Click" Margin="0,0,8,0"/>
-                <Button Content="+ Profile mới" Style="{StaticResource Primary}" Click="AddProfile_Click"/>
+                <Button Content="{DynamicResource T.RefreshUsage}" Click="RefreshUsage_Click" Margin="0,0,8,0"/>
+                <Button Content="{DynamicResource T.NewProfile}" Style="{StaticResource Primary}" Click="AddProfile_Click"/>
             </StackPanel>
             <StackPanel>
                 <TextBlock Text="Claude Switcher" FontSize="22" FontWeight="SemiBold"/>
-                <TextBlock Text="Chạy nhiều tài khoản Claude Desktop cùng lúc" Foreground="{DynamicResource Muted}"/>
+                <TextBlock Text="{DynamicResource T.Tagline}" Foreground="{DynamicResource Muted}"/>
             </StackPanel>
         </DockPanel>
 
         <TabControl Grid.Row="1" x:Name="Tabs" Background="Transparent" BorderThickness="0" Padding="0">
-            <TabItem Header="Profile">
+            <TabItem Header="{DynamicResource T.TabProfiles}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Background="{DynamicResource Card}" Padding="14">
                     <ItemsControl x:Name="ProfileList">
                         <ItemsControl.ItemsPanel>
@@ -83,9 +83,9 @@
                                             <DockPanel Margin="0,10,0,0">
                                                 <TextBlock DockPanel.Dock="Right" Text="{Binding FetchedText}" FontSize="11" Foreground="{DynamicResource Muted}" VerticalAlignment="Center"/>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Button Content="Mở" Style="{StaticResource Primary}" Click="Launch_Click" Tag="{Binding}" Margin="0,0,6,0" Padding="16,5"/>
-                                                    <Button Content="Tắt" Style="{StaticResource Small}" Click="Stop_Click" Tag="{Binding}" Margin="0,0,6,0"/>
-                                                    <Button Content="Sửa" Style="{StaticResource Small}" Click="Edit_Click" Tag="{Binding}" Margin="0,0,6,0"/>
+                                                    <Button Content="{DynamicResource T.Open}" Style="{StaticResource Primary}" Click="Launch_Click" Tag="{Binding}" Margin="0,0,6,0" Padding="16,5"/>
+                                                    <Button Content="{DynamicResource T.Stop}" Style="{StaticResource Small}" Click="Stop_Click" Tag="{Binding}" Margin="0,0,6,0"/>
+                                                    <Button Content="{DynamicResource T.Edit}" Style="{StaticResource Small}" Click="Edit_Click" Tag="{Binding}" Margin="0,0,6,0"/>
                                                     <Button Content="⋯" Style="{StaticResource Small}" Click="More_Click" Tag="{Binding}"/>
                                                 </StackPanel>
                                             </DockPanel>
@@ -98,7 +98,7 @@
                 </ScrollViewer>
             </TabItem>
 
-            <TabItem Header="Chuyển session">
+            <TabItem Header="{DynamicResource T.TabTransfer}">
                 <Grid Background="{DynamicResource Card}">
                     <Grid Margin="16">
                         <Grid.RowDefinitions>
@@ -108,11 +108,11 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource Muted}" Margin="0,0,0,12"
-                                   Text="Chép session Code từ profile này sang profile khác để làm tiếp khi hết usage. Lịch sử hội thoại nằm trong ~\.claude dùng chung, nên session mở ở profile đích vẫn còn đầy đủ. Profile đích phải đã đăng nhập và đang tắt. Chat thường và Cowork lưu theo tài khoản trên server nên không chuyển được."/>
+                                   Text="{DynamicResource T.TransferIntro}"/>
                         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock Text="Từ profile" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="{DynamicResource T.FromProfile}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <ComboBox x:Name="SourceCombo" Width="220" DisplayMemberPath="Name" SelectionChanged="SourceCombo_SelectionChanged"/>
-                            <CheckBox x:Name="ShowArchived" Content="Hiện cả session đã lưu trữ" VerticalAlignment="Center" Margin="16,0,0,0"
+                            <CheckBox x:Name="ShowArchived" Content="{DynamicResource T.ShowArchived}" VerticalAlignment="Center" Margin="16,0,0,0"
                                       Checked="ShowArchived_Changed" Unchecked="ShowArchived_Changed"/>
                         </StackPanel>
                         <ListView Grid.Row="2" x:Name="SessionList" BorderBrush="{DynamicResource Border}">
@@ -125,25 +125,25 @@
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
-                                    <GridViewColumn Header="Tiêu đề" Width="360" DisplayMemberBinding="{Binding Title}"/>
-                                    <GridViewColumn Header="Thư mục" Width="260" DisplayMemberBinding="{Binding Cwd}"/>
-                                    <GridViewColumn Header="Hoạt động" Width="110" DisplayMemberBinding="{Binding LastActivityText}"/>
+                                    <GridViewColumn Header="{DynamicResource T.ColTitle}" Width="360" DisplayMemberBinding="{Binding Title}"/>
+                                    <GridViewColumn Header="{DynamicResource T.ColFolder}" Width="260" DisplayMemberBinding="{Binding Cwd}"/>
+                                    <GridViewColumn Header="{DynamicResource T.ColActivity}" Width="110" DisplayMemberBinding="{Binding LastActivityText}"/>
                                 </GridView>
                             </ListView.View>
                         </ListView>
                         <WrapPanel Grid.Row="3" Margin="0,12,0,0">
-                            <TextBlock Text="Sang profile" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="{DynamicResource T.ToProfile}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <ComboBox x:Name="TargetCombo" Width="200" DisplayMemberPath="Name"/>
-                            <CheckBox x:Name="MoveSessions" IsChecked="True" Content="Chuyển hẳn (gỡ khỏi profile nguồn)" VerticalAlignment="Center" Margin="16,0,0,0"
-                                      ToolTip="Tránh mở cùng một session ở hai cửa sổ: hai tiến trình sẽ cùng ghi vào một lịch sử. Bản gốc được giữ trong thư mục backup."/>
-                            <CheckBox x:Name="OverwriteSessions" Content="Ghi đè nếu đã có" VerticalAlignment="Center" Margin="16,0,16,0"/>
-                            <Button Content="Chuyển session đã chọn" Style="{StaticResource Primary}" Click="Transfer_Click"/>
+                            <CheckBox x:Name="MoveSessions" IsChecked="True" Content="{DynamicResource T.MoveSessions}" VerticalAlignment="Center" Margin="16,0,0,0"
+                                      ToolTip="{DynamicResource T.MoveSessionsTip}"/>
+                            <CheckBox x:Name="OverwriteSessions" Content="{DynamicResource T.Overwrite}" VerticalAlignment="Center" Margin="16,0,16,0"/>
+                            <Button Content="{DynamicResource T.TransferSelected}" Style="{StaticResource Primary}" Click="Transfer_Click"/>
                         </WrapPanel>
                     </Grid>
                 </Grid>
             </TabItem>
 
-            <TabItem Header="MCP dùng chung">
+            <TabItem Header="{DynamicResource T.TabMcp}">
                 <Grid Background="{DynamicResource Card}">
                     <Grid Margin="16">
                         <Grid.RowDefinitions>
@@ -152,14 +152,14 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
                         <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource Muted}" Margin="0,0,0,12"
-                                   Text="Tick để chọn profile nào dùng MCP server nào, rồi bấm Áp dụng. App gộp vào claude_desktop_config.json của từng profile (có backup), các cài đặt khác giữ nguyên. Profile đang chạy sẽ được khởi động lại, vì Claude Desktop đang mở sẽ ghi đè cấu hình. Connector của claude.ai gắn với tài khoản; muốn dùng chung, thêm nó bằng URL (chạy qua mcp-remote). MCP trong ~\.claude.json (dùng cho session Code) vốn đã dùng chung cho mọi profile."/>
+                                   Text="{DynamicResource T.McpIntro}"/>
                         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                             <ItemsControl x:Name="McpList">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border BorderBrush="{DynamicResource Border}" BorderThickness="0,0,0,1" Padding="0,10">
                                             <DockPanel>
-                                                <Button DockPanel.Dock="Right" Content="Xoá khỏi mọi profile" Style="{StaticResource Small}" Click="McpRemoveAll_Click" Tag="{Binding}" VerticalAlignment="Top"/>
+                                                <Button DockPanel.Dock="Right" Content="{DynamicResource T.McpRemoveAll}" Style="{StaticResource Small}" Click="McpRemoveAll_Click" Tag="{Binding}" VerticalAlignment="Top"/>
                                                 <StackPanel>
                                                     <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
                                                     <TextBlock Text="{Binding Summary}" Foreground="{DynamicResource Muted}" FontSize="12" TextTrimming="CharacterEllipsis"/>
@@ -181,46 +181,50 @@
                             </ItemsControl>
                         </ScrollViewer>
                         <WrapPanel Grid.Row="2" Margin="0,12,0,0">
-                            <Button Content="Bật cho tất cả" Click="McpAllOn_Click" Margin="0,0,8,0"/>
-                            <Button Content="Thêm MCP (JSON)" Click="McpAddJson_Click" Margin="0,0,8,0"/>
-                            <Button Content="Thêm connector bằng URL" Click="McpAddUrl_Click" Margin="0,0,8,0"/>
-                            <Button Content="Tải lại" Click="McpReload_Click" Margin="0,0,8,0"/>
-                            <Button Content="Áp dụng" Style="{StaticResource Primary}" Click="McpApply_Click"/>
+                            <Button Content="{DynamicResource T.McpAllOn}" Click="McpAllOn_Click" Margin="0,0,8,0"/>
+                            <Button Content="{DynamicResource T.McpAddJson}" Click="McpAddJson_Click" Margin="0,0,8,0"/>
+                            <Button Content="{DynamicResource T.McpAddUrl}" Click="McpAddUrl_Click" Margin="0,0,8,0"/>
+                            <Button Content="{DynamicResource T.Reload}" Click="McpReload_Click" Margin="0,0,8,0"/>
+                            <Button Content="{DynamicResource T.Apply}" Style="{StaticResource Primary}" Click="McpApply_Click"/>
                         </WrapPanel>
                     </Grid>
                 </Grid>
             </TabItem>
 
-            <TabItem Header="Cài đặt">
+            <TabItem Header="{DynamicResource T.TabSettings}">
                 <Grid Background="{DynamicResource Card}">
                     <StackPanel Margin="20" MaxWidth="640" HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock Text="{DynamicResource T.Language}" VerticalAlignment="Center" Width="190" FontSize="14"/>
+                            <ComboBox x:Name="LanguageCombo" Width="160" SelectionChanged="Language_Changed"/>
+                        </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
-                            <TextBlock Text="Giao diện" VerticalAlignment="Center" Width="190" FontSize="14"/>
+                            <TextBlock Text="{DynamicResource T.Appearance}" VerticalAlignment="Center" Width="190" FontSize="14"/>
                             <ComboBox x:Name="ThemeCombo" Width="160" SelectionChanged="Theme_Changed"/>
                         </StackPanel>
-                        <CheckBox x:Name="StartWithWindows" Content="Khởi động cùng Windows" FontSize="14"
+                        <CheckBox x:Name="StartWithWindows" Content="{DynamicResource T.StartWithWindows}" FontSize="14"
                                   Checked="StartWithWindows_Changed" Unchecked="StartWithWindows_Changed"/>
                         <TextBlock Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="24,2,0,12"
-                                   Text="Khi bật máy, Claude Switcher chạy ở khay hệ thống và tự mở các profile có bật &quot;Tự mở khi khởi động&quot; (chỉnh trong nút Sửa của từng profile)."/>
-                        <CheckBox x:Name="StartMinimized" Content="Thu nhỏ xuống khay khi khởi động cùng Windows"
+                                   Text="{DynamicResource T.StartWithWindowsHint}"/>
+                        <CheckBox x:Name="StartMinimized" Content="{DynamicResource T.StartMinimized}"
                                   Checked="Settings_Changed" Unchecked="Settings_Changed" Margin="0,0,0,16"/>
-                        <CheckBox x:Name="RouteLinks" Content="Mở link đăng nhập đúng profile" FontSize="14"
+                        <CheckBox x:Name="RouteLinks" Content="{DynamicResource T.RouteLinks}" FontSize="14"
                                   Checked="RouteLinks_Changed" Unchecked="RouteLinks_Changed"/>
                         <TextBlock Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="24,2,0,16"
-                                   Text="Link đăng nhập trong email (claude://) được gửi tới profile đang mở mà chưa đăng nhập, thay vì luôn mở profile Mặc định. Các link khác vẫn mở ở profile Mặc định. Nếu Windows hỏi mở link bằng ứng dụng nào, chọn Claude Switcher."/>
-                        <Button x:Name="SetDefaultApp" Content="Chọn Claude Switcher trong Default apps của Windows" Click="SetDefaultApp_Click"
+                                   Text="{DynamicResource T.RouteLinksHint}"/>
+                        <Button x:Name="SetDefaultApp" Content="{DynamicResource T.SetDefaultApp}" Click="SetDefaultApp_Click"
                                 HorizontalAlignment="Left" Margin="24,-8,0,16" Visibility="Collapsed"/>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                            <TextBlock Text="Làm mới usage mỗi" VerticalAlignment="Center" Width="190"/>
+                            <TextBlock Text="{DynamicResource T.RefreshEvery}" VerticalAlignment="Center" Width="190"/>
                             <ComboBox x:Name="RefreshCombo" Width="120" SelectionChanged="Settings_Changed"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
-                            <TextBlock Text="Cảnh báo khi usage 5 giờ ≥" VerticalAlignment="Center" Width="190"/>
+                            <TextBlock Text="{DynamicResource T.WarnAt}" VerticalAlignment="Center" Width="190"/>
                             <ComboBox x:Name="WarnCombo" Width="120" SelectionChanged="Settings_Changed"/>
                         </StackPanel>
                         <WrapPanel>
-                            <Button Content="Mở thư mục dữ liệu app" Click="OpenAppData_Click" Margin="0,0,8,8"/>
-                            <Button Content="Mở thư mục backup" Click="OpenBackups_Click" Margin="0,0,8,8"/>
+                            <Button Content="{DynamicResource T.OpenAppData}" Click="OpenAppData_Click" Margin="0,0,8,8"/>
+                            <Button Content="{DynamicResource T.OpenBackups}" Click="OpenBackups_Click" Margin="0,0,8,8"/>
                         </WrapPanel>
                         <TextBlock x:Name="LauncherInfo" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" FontSize="12" Margin="0,12,0,0"/>
                     </StackPanel>

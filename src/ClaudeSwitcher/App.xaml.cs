@@ -20,6 +20,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
         var args = e.Args;
+        Loc.SetLanguage(ArgValue(args, "--lang") ?? ProfileStore.Load().Language);
 
         // Shortcut mode: open one profile and exit without showing the manager.
         if (ArgValue(args, "--launch") is { } launchId)
@@ -68,7 +69,7 @@ public partial class App : Application
         _showEvent = new EventWaitHandle(false, EventResetMode.AutoReset, screenshot == null ? ShowEventName : null);
 
         var startup = args.Contains(StartupManager.StartupArg);
-        var window = new MainWindow(startup, screenshot, ArgValue(args, "--theme"));
+        var window = new MainWindow(startup, screenshot, ArgValue(args, "--theme"), ArgValue(args, "--lang"));
         MainWindow = window;
         if (!(startup && window.Settings.StartMinimized)) window.Show();
 

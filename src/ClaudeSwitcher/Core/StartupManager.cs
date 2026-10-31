@@ -41,7 +41,7 @@ public static class StartupManager
         link.TargetPath = ExePath;
         link.Arguments = $"--launch {profile.Id}";
         link.IconLocation = ExePath + ",0";
-        link.Description = $"Mở Claude Desktop với profile {profile.Name}";
+        link.Description = Loc.T("ShortcutDescription", profile.Name);
         link.Save();
         return path;
     }

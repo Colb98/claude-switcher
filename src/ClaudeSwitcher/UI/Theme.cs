@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
+using ClaudeSwitcher.Core;
 using Microsoft.Win32;
 
 namespace ClaudeSwitcher.UI;
@@ -52,6 +53,14 @@ public static class Theme
         }
         foreach (Window w in Application.Current.Windows) ApplyTitleBar(w);
         Changed?.Invoke();
+    }
+
+    /// <summary>Sets the UI language and publishes every string as resource "T.&lt;key&gt;" for XAML.</summary>
+    public static void ApplyLanguage(string language)
+    {
+        Loc.SetLanguage(language);
+        var resources = Application.Current.Resources;
+        foreach (var (key, _) in Loc.All) resources["T." + key] = Loc.T(key);
     }
 
     public static Brush Brush(string key) => (Brush)Application.Current.Resources[key];

@@ -23,7 +23,7 @@ public sealed class UsageBar
         Label = w.Label;
         Percent = Math.Clamp(w.Percent, 0, 100);
         Value = $"{w.Percent:0}%";
-        Reset = w.ResetsAt is { } t ? "reset " + FormatReset(t) : "";
+        Reset = w.ResetsAt is { } t ? Loc.T("ResetAt", FormatReset(t)) : "";
         Brush = Percent >= 90 ? Danger : Percent >= 70 ? Warn : Ok;
     }
 
@@ -48,8 +48,8 @@ public sealed class UsageBar
     {
         var local = t.LocalDateTime;
         var left = t - DateTimeOffset.Now;
-        var rel = left.TotalMinutes < 1 ? "sắp" : left.TotalHours < 1 ? $"sau {left.Minutes} phút"
-            : left.TotalDays < 1 ? $"sau {(int)left.TotalHours} giờ {left.Minutes} phút" : $"sau {(int)left.TotalDays} ngày";
+        var rel = left.TotalMinutes < 1 ? Loc.T("ResetSoon") : left.TotalHours < 1 ? Loc.T("ResetMinutes", left.Minutes)
+            : left.TotalDays < 1 ? Loc.T("ResetHours", (int)left.TotalHours, left.Minutes) : Loc.T("ResetDays", (int)left.TotalDays);
         var when = local.Date == DateTime.Today ? local.ToString("HH:mm") : local.ToString("HH:mm dd/MM");
         return $"{when} ({rel})";
     }
@@ -61,7 +61,8 @@ public sealed class ProfileViewModel : Observable
 
     public ProfileConfig Config { get; }
     public string Id => Config.Id;
-    public string Name => Config.Name;
+    /// <summary>The Default profile follows the UI language until the user renames it.</summary>
+    public string Name => Config.IsDefault && Config.Name is "Default" or "Mặc định" ? Loc.T("DefaultProfile") : Config.Name;
     public bool IsDefault => Config.IsDefault;
     public string DataDir => Config.ResolveDataDir();
     public Brush ColorBrush
@@ -79,20 +80,20 @@ public sealed class ProfileViewModel : Observable
         get => _isRunning;
         set { if (_isRunning == value) return; _isRunning = value; Raise(); Raise(nameof(RunState)); Raise(nameof(RunBrush)); }
     }
-    public string RunState => IsRunning ? "Đang chạy" : "Đã tắt";
+    public string RunState => IsRunning ? Loc.T("Running") : Loc.T("Stopped");
     public Brush RunBrush => IsRunning ? Brushes.SeaGreen : Brushes.Gray;
 
     public UsageReport? Usage { get; private set; }
-    public string Account => Usage?.Email ?? (Usage?.Status == UsageStatus.SignedOut ? "Chưa đăng nhập" : "…");
+    public string Account => Usage?.Email ?? (Usage?.Status == UsageStatus.SignedOut ? Loc.T("SignedOut") : "…");
     public string Plan => Usage?.PlanName ?? "";
     public string UsageMessage => Usage switch
     {
-        { Status: UsageStatus.SignedOut } => "Bấm Mở rồi đăng nhập tài khoản Claude cho profile này.",
+        { Status: UsageStatus.SignedOut } => Loc.T("SignInHint"),
         { Status: not UsageStatus.Ok } u => u.Message ?? "",
         _ => "",
     };
     public bool HasUsageMessage => UsageMessage.Length > 0;
-    public string FetchedText => Usage == null ? "" : "cập nhật " + Usage.FetchedAt.LocalDateTime.ToString("HH:mm:ss");
+    public string FetchedText => Usage == null ? "" : Loc.T("Updated", Usage.FetchedAt.LocalDateTime.ToString("HH:mm:ss"));
     public IReadOnlyList<UsageBar> Bars { get; private set; } = Array.Empty<UsageBar>();
     public double FiveHourPercent => Usage?.FiveHour?.Percent ?? -1;
 
@@ -102,7 +103,7 @@ public sealed class ProfileViewModel : Observable
         {
             var five = Usage?.FiveHour is { } f ? $"{f.Percent:0}%" : "?";
             var week = Usage?.Weekly is { } w ? $"{w.Percent:0}%" : "?";
-            return $"{Name}: 5h {five}, tuần {week}";
+            return Loc.T("TrayLine", Name, five, week);
         }
     }
 

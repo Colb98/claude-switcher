@@ -23,8 +23,11 @@ public partial class MainWindow : Window
 {
     static readonly int[] RefreshChoices = { 60, 120, 300, 600 };
     static readonly int[] WarnChoices = { 70, 80, 90, 95 };
-    static readonly (string Mode, string Label)[] ThemeChoices =
-        { (Theme.System, "Theo Windows"), (Theme.Light, "Sáng"), (Theme.Dark, "Tối") };
+    static readonly (string Mode, string LabelKey)[] ThemeChoices =
+        { (Theme.System, "ThemeSystem"), (Theme.Light, "ThemeLight"), (Theme.Dark, "ThemeDark") };
+    // Each language is named in itself, so it can be found whichever one is active.
+    static readonly (string Code, string Label)[] LanguageChoices =
+        { (Loc.English, "English"), (Loc.Vietnamese, "Tiếng Việt") };
 
     public AppSettings Settings { get; }
     readonly ObservableCollection<ProfileViewModel> _profiles = new();
@@ -40,10 +43,11 @@ public partial class MainWindow : Window
     bool _exiting;
     bool _refreshing;
 
-    public MainWindow(bool fromStartup, string? screenshotPath, string? themeOverride = null)
+    public MainWindow(bool fromStartup, string? screenshotPath, string? themeOverride = null, string? languageOverride = null)
     {
         Settings = ProfileStore.Load();
         Theme.Apply(themeOverride ?? Settings.Theme);
+        Theme.ApplyLanguage(languageOverride ?? Settings.Language);
         InitializeComponent();
         // The user may have just picked the default app in Settings; refresh the hint when they come back.
         Activated += (_, _) => UpdateLinkHint();
@@ -138,7 +142,7 @@ public partial class MainWindow : Window
         {
             if (InstanceManager.FindMainProcess(p) != null) continue;
             try { InstanceManager.Launch(p); }
-            catch (Exception e) { SetStatus($"Không mở được {p.Name}: {e.Message}"); }
+            catch (Exception e) { SetStatus(Loc.T("OpenFailed", p.Name, e.Message)); }
         }
     }
 
@@ -152,7 +156,7 @@ public partial class MainWindow : Window
         {
             var running = InstanceManager.FindMainProcess(p.Config) != null;
             InstanceManager.Launch(p.Config);
-            SetStatus(running ? $"Đang đưa cửa sổ {p.Name} lên trước…" : $"Đang mở {p.Name}…");
+            SetStatus(Loc.T(running ? "Focusing" : "Opening", p.Name));
         }
         catch (Exception ex) { Error(ex.Message); }
     }
@@ -161,13 +165,13 @@ public partial class MainWindow : Window
 
     bool StopProfile(ProfileViewModel p, bool ask)
     {
-        if (InstanceManager.FindMainProcess(p.Config) == null) { SetStatus($"{p.Name} không chạy."); return true; }
-        if (ask && MessageBox.Show(this, $"Tắt Claude Desktop của profile \"{p.Name}\"?\nCông việc đang chạy trong cửa sổ đó sẽ dừng.",
-                "Tắt profile", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
+        if (InstanceManager.FindMainProcess(p.Config) == null) { SetStatus(Loc.T("NotRunning", p.Name)); return true; }
+        if (ask && MessageBox.Show(this, Loc.T("StopConfirm", p.Name),
+                Loc.T("StopTitle"), MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
             return false;
         InstanceManager.Stop(p.Config);
         RefreshRunning();
-        SetStatus($"Đã tắt {p.Name}.");
+        SetStatus(Loc.T("StoppedProfile", p.Name));
         return true;
     }
 
@@ -179,7 +183,7 @@ public partial class MainWindow : Window
         cfg.AutoStart = dlg.AutoStart;
         ProfileStore.Save(Settings);
         RebuildProfiles();
-        if (MessageBox.Show(this, $"Đã tạo profile \"{cfg.Name}\". Mở ngay để đăng nhập tài khoản?", "Profile mới",
+        if (MessageBox.Show(this, Loc.T("CreatedOpenNow", cfg.Name), Loc.T("NewProfileTitle"),
                 MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
             LaunchProfile(_profiles.First(p => p.Id == cfg.Id));
     }
@@ -206,20 +210,19 @@ public partial class MainWindow : Window
             item.Click += (_, _) => { try { action(); } catch (Exception ex) { Error(ex.Message); } };
             menu.Items.Add(item);
         }
-        Add("Mở thư mục dữ liệu", () => OpenFolder(p.DataDir));
-        Add("Tạo shortcut trên Desktop", () => SetStatus("Đã tạo " + StartupManager.CreateProfileShortcut(p.Config)));
-        Add("Chuyển session từ profile này…", () => { SourceCombo.SelectedItem = p; Tabs.SelectedIndex = 1; });
+        Add(Loc.T("MenuOpenData"), () => OpenFolder(p.DataDir));
+        Add(Loc.T("MenuShortcut"), () => SetStatus(Loc.T("ShortcutCreated", StartupManager.CreateProfileShortcut(p.Config))));
+        Add(Loc.T("MenuTransferFrom"), () => { SourceCombo.SelectedItem = p; Tabs.SelectedIndex = 1; });
         menu.Items.Add(new Separator());
-        Add("Xoá profile…", () => DeleteProfile(p), enabled: !p.IsDefault);
+        Add(Loc.T("MenuDelete"), () => DeleteProfile(p), enabled: !p.IsDefault);
         menu.PlacementTarget = (UIElement)sender;
         menu.IsOpen = true;
     }
 
     void DeleteProfile(ProfileViewModel p)
     {
-        var answer = MessageBox.Show(this,
-            $"Xoá profile \"{p.Name}\"?\n\nYes: xoá profile và toàn bộ dữ liệu đăng nhập của nó.\nNo: chỉ gỡ khỏi danh sách, giữ thư mục dữ liệu.",
-            "Xoá profile", MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
+        var answer = MessageBox.Show(this, Loc.T("DeleteConfirm", p.Name),
+            Loc.T("DeleteTitle"), MessageBoxButton.YesNoCancel, MessageBoxImage.Warning);
         if (answer == MessageBoxResult.Cancel) return;
         if (!StopProfile(p, ask: false)) return;
         Settings.Profiles.Remove(p.Config);
@@ -227,7 +230,7 @@ public partial class MainWindow : Window
         if (answer == MessageBoxResult.Yes && p.Config.DataDir is { } dir && Directory.Exists(dir))
         {
             try { Directory.Delete(dir, true); }
-            catch (IOException ex) { Error("Chưa xoá được thư mục dữ liệu (còn tiến trình đang dùng): " + ex.Message); }
+            catch (IOException ex) { Error(Loc.T("DeleteFolderFailed", ex.Message)); }
         }
         RebuildProfiles();
     }
@@ -242,10 +245,10 @@ public partial class MainWindow : Window
         _refreshing = true;
         try
         {
-            SetStatus("Đang lấy usage…");
+            SetStatus(Loc.T("FetchingUsage"));
             var tasks = _profiles.ToList().Select(async p => (p, report: await Task.Run(() => _usage.FetchAsync(p.DataDir))));
             foreach (var (p, report) in await Task.WhenAll(tasks)) p.SetUsage(report);
-            SetStatus($"Usage cập nhật lúc {DateTime.Now:HH:mm:ss}.");
+            SetStatus(Loc.T("UsageUpdated", DateTime.Now.ToString("HH:mm:ss")));
             UpdateTray();
             WarnIfNeeded();
         }
@@ -262,9 +265,9 @@ public partial class MainWindow : Window
             var best = _profiles.Where(o => o != p && o.Usage?.Status == UsageStatus.Ok && o.FiveHourPercent >= 0)
                 .OrderBy(o => o.FiveHourPercent).FirstOrDefault();
             var tip = best != null && best.FiveHourPercent < five
-                ? $"Gợi ý: chuyển session sang \"{best.Name}\" (5 giờ: {best.FiveHourPercent:0}%)."
-                : "Chưa có profile nào còn nhiều usage hơn.";
-            _tray.ShowBalloonTip(8000, $"{p.Name} đã dùng {five:0}% usage 5 giờ", tip, Forms.ToolTipIcon.Warning);
+                ? Loc.T("WarnSuggest", best.Name, best.FiveHourPercent)
+                : Loc.T("WarnNoBetter");
+            _tray.ShowBalloonTip(8000, Loc.T("WarnTitle", p.Name, five), tip, Forms.ToolTipIcon.Warning);
         }
     }
 
@@ -283,9 +286,9 @@ public partial class MainWindow : Window
     void Transfer_Click(object sender, RoutedEventArgs e)
     {
         if (SourceCombo.SelectedItem is not ProfileViewModel src || TargetCombo.SelectedItem is not ProfileViewModel dst) return;
-        if (src.Id == dst.Id) { Error("Profile nguồn và đích phải khác nhau."); return; }
+        if (src.Id == dst.Id) { Error(Loc.T("SameProfile")); return; }
         var chosen = (SessionList.ItemsSource as IEnumerable<CodeSession>)?.Where(s => s.Selected).ToList() ?? new();
-        if (chosen.Count == 0) { Error("Hãy tick ít nhất một session."); return; }
+        if (chosen.Count == 0) { Error(Loc.T("PickSession")); return; }
         var move = MoveSessions.IsChecked == true;
         // A running Desktop keeps its sessions in memory and would write them back, so both ends must be closed.
         var mustClose = new[] { dst }.Concat(move ? new[] { src } : Array.Empty<ProfileViewModel>())
@@ -293,9 +296,8 @@ public partial class MainWindow : Window
         if (mustClose.Count > 0)
         {
             var names = string.Join(", ", mustClose.Select(p => $"\"{p.Name}\""));
-            if (MessageBox.Show(this, $"Cần tắt {names} để chuyển session (Claude Desktop đang mở sẽ ghi đè thay đổi).\n" +
-                    "Các session khác đang chạy trong cửa sổ đó sẽ dừng. Tắt ngay?",
-                    "Chuyển session", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
+            if (MessageBox.Show(this, Loc.T("TransferMustClose", names),
+                    Loc.T("TransferTitle"), MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
             foreach (var p in mustClose) InstanceManager.Stop(p.Config);
             RefreshRunning();
         }
@@ -303,14 +305,14 @@ public partial class MainWindow : Window
         {
             var n = SessionTransfer.CopyTo(chosen, dst.DataDir, OverwriteSessions.IsChecked == true);
             var skipped = chosen.Count - n;
-            var msg = $"Đã chép {n} session sang \"{dst.Name}\"." + (skipped > 0 ? $" Bỏ qua {skipped} session đã có sẵn." : "");
+            var msg = Loc.T("Copied", n, dst.Name) + (skipped > 0 ? Loc.T("Skipped", skipped) : "");
             if (move)
             {
                 SessionTransfer.RemoveFromSource(chosen);
-                msg += $" Đã gỡ khỏi \"{src.Name}\" (bản gốc nằm trong thư mục backup).";
+                msg += Loc.T("RemovedFromSource", src.Name);
                 LoadSessions();
             }
-            if (MessageBox.Show(this, msg + "\n\nMở profile đích ngay để làm tiếp?", "Chuyển session",
+            if (MessageBox.Show(this, msg + Loc.T("OpenTargetNow"), Loc.T("TransferTitle"),
                     MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
                 LaunchProfile(dst);
             SetStatus(msg);
@@ -327,7 +329,7 @@ public partial class MainWindow : Window
             _mcpRows.Add(new McpRow(s, Settings.Profiles));
     }
 
-    void McpReload_Click(object sender, RoutedEventArgs e) { ReloadMcp(); SetStatus("Đã đọc lại cấu hình MCP."); }
+    void McpReload_Click(object sender, RoutedEventArgs e) { ReloadMcp(); SetStatus(Loc.T("McpReloaded")); }
 
     void McpAllOn_Click(object sender, RoutedEventArgs e)
     {
@@ -338,13 +340,12 @@ public partial class MainWindow : Window
 
     void McpAddJson_Click(object sender, RoutedEventArgs e)
     {
-        var text = InputDialog.Ask(this, "Thêm MCP server",
-            "Dán JSON dạng {\"tên\": {\"command\": \"...\", \"args\": [...]}} hoặc cả khối \"mcpServers\":",
+        var text = InputDialog.Ask(this, Loc.T("McpAddJsonTitle"), Loc.T("McpAddJsonPrompt"),
             "{\n  \"my-server\": {\n    \"command\": \"npx\",\n    \"args\": [\"-y\", \"package-name\"]\n  }\n}", multiline: true);
         if (text == null) return;
         try
         {
-            var node = JsonNode.Parse(text) as JsonObject ?? throw new JsonException("Cần một object JSON.");
+            var node = JsonNode.Parse(text) as JsonObject ?? throw new JsonException(Loc.T("NeedJsonObject"));
             if (node["mcpServers"] is JsonObject inner) node = inner;
             foreach (var (name, def) in node.ToList())
             {
@@ -352,14 +353,14 @@ public partial class MainWindow : Window
                 AddMcp(name, (JsonObject)d.DeepClone());
             }
         }
-        catch (JsonException ex) { Error("JSON không hợp lệ: " + ex.Message); }
+        catch (JsonException ex) { Error(Loc.T("BadJson", ex.Message)); }
     }
 
     void McpAddUrl_Click(object sender, RoutedEventArgs e)
     {
-        var url = InputDialog.Ask(this, "Thêm connector bằng URL", "URL của MCP server từ xa (ví dụ https://mcp.example.com/sse):", "https://");
+        var url = InputDialog.Ask(this, Loc.T("McpAddUrl"), Loc.T("McpAddUrlPrompt"), "https://");
         if (string.IsNullOrWhiteSpace(url) || !Uri.TryCreate(url.Trim(), UriKind.Absolute, out var uri)) return;
-        var name = InputDialog.Ask(this, "Tên connector", "Đặt tên cho connector:", uri.Host.Split('.').FirstOrDefault(x => x != "mcp" && x != "www") ?? uri.Host);
+        var name = InputDialog.Ask(this, Loc.T("ConnectorNameTitle"), Loc.T("ConnectorNamePrompt"), uri.Host.Split('.').FirstOrDefault(x => x != "mcp" && x != "www") ?? uri.Host);
         if (string.IsNullOrWhiteSpace(name)) return;
         AddMcp(name.Trim(), McpSync.RemoteConnector(uri.ToString()));
     }
@@ -371,22 +372,21 @@ public partial class MainWindow : Window
         var server = new SharedMcpServer { Name = name, Definition = def };
         foreach (var p in Settings.Profiles) server.EnabledFor[p.Id] = true;
         _mcpRows.Add(new McpRow(server, Settings.Profiles));
-        SetStatus($"Đã thêm \"{name}\" cho mọi profile. Bấm Áp dụng để ghi.");
+        SetStatus(Loc.T("McpAdded", name));
     }
 
     void McpApply_Click(object sender, RoutedEventArgs e)
     {
         var servers = _mcpRows.Select(r => r.Server).ToList();
         var changed = McpSync.ProfilesNeedingChange(Settings.Profiles, servers);
-        if (changed.Count == 0) { SetStatus("Cấu hình MCP không có gì thay đổi."); return; }
+        if (changed.Count == 0) { SetStatus(Loc.T("McpNoChange")); return; }
 
         // A running Desktop rewrites claude_desktop_config.json from memory and would drop the change,
         // so running profiles are closed, written, then reopened.
         var running = _profiles.Where(p => changed.Contains(p.Config) && InstanceManager.FindMainProcess(p.Config) != null).ToList();
         if (running.Count > 0 &&
-            MessageBox.Show(this, $"Cần khởi động lại {string.Join(", ", running.Select(p => $"\"{p.Name}\""))} để áp dụng MCP " +
-                "(Claude Desktop đang mở sẽ ghi đè cấu hình).\nCác session đang chạy trong cửa sổ đó sẽ dừng. Tiếp tục?",
-                "MCP dùng chung", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
+            MessageBox.Show(this, Loc.T("McpRestart", string.Join(", ", running.Select(p => $"\"{p.Name}\""))),
+                Loc.T("TabMcp"), MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
             return;
         try
         {
@@ -394,7 +394,7 @@ public partial class MainWindow : Window
             var backup = McpSync.Apply(changed, servers);
             foreach (var p in running) InstanceManager.Launch(p.Config);
             RefreshRunning();
-            SetStatus($"Đã áp dụng MCP cho {string.Join(", ", changed.Select(p => p.Name))}. Backup: {backup}");
+            SetStatus(Loc.T("McpApplied", string.Join(", ", changed.Select(p => p.Name)), backup));
             ReloadMcp();
         }
         catch (Exception ex) { Error(ex.Message); }
@@ -405,24 +405,26 @@ public partial class MainWindow : Window
     void LoadSettingsUi()
     {
         _loadingSettings = true;
-        ThemeCombo.ItemsSource = ThemeChoices.Select(t => t.Label).ToList();
+        LanguageCombo.ItemsSource = LanguageChoices.Select(l => l.Label).ToList();
+        LanguageCombo.SelectedIndex = Math.Max(0, Array.FindIndex(LanguageChoices, l => l.Code == Loc.Language));
+        ThemeCombo.ItemsSource = ThemeChoices.Select(t => Loc.T(t.LabelKey)).ToList();
         ThemeCombo.SelectedIndex = Math.Max(0, Array.FindIndex(ThemeChoices, t => t.Mode == Settings.Theme));
         StartWithWindows.IsChecked = StartupManager.IsEnabled;
         StartMinimized.IsChecked = Settings.StartMinimized;
         RouteLinks.IsChecked = LinkRouter.IsEnabled;
         UpdateLinkHint();
-        RefreshCombo.ItemsSource = RefreshChoices.Select(s => s < 120 ? $"{s} giây" : $"{s / 60} phút").ToList();
+        RefreshCombo.ItemsSource = RefreshChoices.Select(s => s < 120 ? Loc.T("Seconds", s) : Loc.T("Minutes", s / 60)).ToList();
         RefreshCombo.SelectedIndex = Math.Max(0, Array.IndexOf(RefreshChoices, Settings.UsageRefreshSeconds));
         WarnCombo.ItemsSource = WarnChoices.Select(v => $"{v}%").ToList();
         WarnCombo.SelectedIndex = Math.Max(0, Array.IndexOf(WarnChoices, Settings.WarnFiveHourPercent));
-        LauncherInfo.Text = $"Claude Desktop: {ClaudeInstall.FindLauncher() ?? "không tìm thấy"}\nDữ liệu profile mặc định: {ClaudeInstall.FindDefaultDataDir()}\nDữ liệu app: {ProfileStore.Root}";
+        LauncherInfo.Text = Loc.T("LauncherInfo", ClaudeInstall.FindLauncher() ?? Loc.T("NotFound"), ClaudeInstall.FindDefaultDataDir(), ProfileStore.Root);
         _loadingSettings = false;
     }
 
     void StartWithWindows_Changed(object sender, RoutedEventArgs e)
     {
         if (_loadingSettings) return;
-        try { StartupManager.SetEnabled(StartWithWindows.IsChecked == true); SetStatus("Đã lưu cài đặt khởi động."); }
+        try { StartupManager.SetEnabled(StartWithWindows.IsChecked == true); SetStatus(Loc.T("StartupSaved")); }
         catch (Exception ex) { Error(ex.Message); }
     }
 
@@ -433,12 +435,9 @@ public partial class MainWindow : Window
         {
             var enabled = RouteLinks.IsChecked == true;
             LinkRouter.SetEnabled(enabled);
-            SetStatus("Đã lưu cài đặt mở link.");
-            if (enabled && !LinkRouter.IsWindowsDefault && MessageBox.Show(this,
-                    "Windows chỉ cho bạn tự chọn ứng dụng mở link claude://.\n\n" +
-                    "Bấm OK để mở trang Claude Switcher trong Settings → Default apps, " +
-                    "rồi bấm vào dòng CLAUDE và chọn Claude Switcher.",
-                    "Mở link đăng nhập đúng profile", MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
+            SetStatus(Loc.T("LinksSaved"));
+            if (enabled && !LinkRouter.IsWindowsDefault && MessageBox.Show(this, Loc.T("LinksDefaultApp"),
+                    Loc.T("RouteLinks"), MessageBoxButton.OKCancel, MessageBoxImage.Information) == MessageBoxResult.OK)
                 LinkRouter.OpenDefaultAppsSettings();
             UpdateLinkHint();
         }
@@ -459,6 +458,20 @@ public partial class MainWindow : Window
         ProfileStore.Save(Settings);
     }
 
+    async void Language_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loadingSettings || LanguageCombo.SelectedIndex < 0) return;
+        Settings.Language = LanguageChoices[LanguageCombo.SelectedIndex].Code;
+        ProfileStore.Save(Settings);
+        // XAML follows the T.* resources; strings built in code are rebuilt here.
+        Theme.ApplyLanguage(Settings.Language);
+        LoadSettingsUi();
+        RebuildProfiles();
+        LoadSessions();
+        SetStatus("");
+        await RefreshUsageAsync();
+    }
+
     void Settings_Changed(object sender, RoutedEventArgs e)
     {
         if (_loadingSettings) return;
@@ -477,18 +490,18 @@ public partial class MainWindow : Window
     void RebuildTrayMenu()
     {
         var menu = new Forms.ContextMenuStrip();
-        menu.Items.Add("Mở Claude Switcher", null, (_, _) => ShowFromTray());
+        menu.Items.Add(Loc.T("TrayOpenApp"), null, (_, _) => ShowFromTray());
         menu.Items.Add(new Forms.ToolStripSeparator());
         foreach (var p in _profiles)
         {
             var item = new Forms.ToolStripMenuItem(p.Name);
-            item.DropDownItems.Add("Mở", null, (_, _) => LaunchProfile(p));
-            item.DropDownItems.Add("Tắt", null, (_, _) => StopProfile(p, ask: true));
+            item.DropDownItems.Add(Loc.T("Open"), null, (_, _) => LaunchProfile(p));
+            item.DropDownItems.Add(Loc.T("Stop"), null, (_, _) => StopProfile(p, ask: true));
             menu.Items.Add(item);
         }
         menu.Items.Add(new Forms.ToolStripSeparator());
-        menu.Items.Add("Làm mới usage", null, async (_, _) => await RefreshUsageAsync());
-        menu.Items.Add("Thoát", null, (_, _) => ExitApp());
+        menu.Items.Add(Loc.T("RefreshUsage"), null, async (_, _) => await RefreshUsageAsync());
+        menu.Items.Add(Loc.T("TrayExit"), null, (_, _) => ExitApp());
         _tray.ContextMenuStrip = menu;
     }
 
@@ -511,7 +524,7 @@ public partial class MainWindow : Window
         {
             e.Cancel = true;
             Hide();
-            _tray.ShowBalloonTip(3000, "Claude Switcher vẫn chạy", "Mở lại từ biểu tượng ở khay hệ thống.", Forms.ToolTipIcon.Info);
+            _tray.ShowBalloonTip(3000, Loc.T("TrayStillRunning"), Loc.T("TrayReopen"), Forms.ToolTipIcon.Info);
             return;
         }
         base.OnClosing(e);

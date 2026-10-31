@@ -21,7 +21,7 @@ public static class InstanceManager
     public static void Launch(ProfileConfig profile, string? url = null)
     {
         var launcher = ClaudeInstall.FindLauncher()
-            ?? throw new InvalidOperationException("Không tìm thấy Claude Desktop. Hãy cài Claude Desktop trước.");
+            ?? throw new InvalidOperationException(Loc.T("ClaudeNotFound"));
         var args = new List<string>();
         if (!profile.IsDefault)
         {
