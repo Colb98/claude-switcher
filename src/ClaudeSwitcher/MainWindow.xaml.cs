@@ -34,6 +34,7 @@ public partial class MainWindow : Window
     readonly DispatcherTimer _processTimer = new() { Interval = TimeSpan.FromSeconds(4) };
     readonly HashSet<string> _warned = new();
     readonly Forms.NotifyIcon _tray;
+    readonly TrayPopup _trayPopup;
     readonly string? _screenshotPath;
     bool _loadingSettings;
     bool _exiting;
@@ -75,7 +76,13 @@ public partial class MainWindow : Window
             Text = "Claude Switcher",
             Visible = true,
         };
-        _tray.DoubleClick += (_, _) => ShowFromTray();
+        _trayPopup = new TrayPopup(LaunchProfile, ShowFromTray);
+        _tray.MouseClick += (_, e) =>
+        {
+            if (e.Button != Forms.MouseButtons.Left) return;
+            RefreshRunning();
+            _trayPopup.Toggle(_profiles);
+        };
         _tray.BalloonTipClicked += (_, _) => ShowFromTray();
         RebuildTrayMenu();
 
