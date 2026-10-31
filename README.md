@@ -13,7 +13,7 @@
 
 Yêu cầu: Windows 10/11 và Claude Desktop đã cài sẵn.
 
-1. Build `dist\ClaudeSwitcher.exe` (xem [Build](#build)).
+1. Tải `ClaudeSwitcher.exe` từ trang [Releases](https://github.com/Colb98/claude-switcher/releases/latest), hoặc tự build ra `dist\ClaudeSwitcher.exe` (xem [Build](#build)).
 2. Chép file exe vào một thư mục cố định (ví dụ `C:\Tools\ClaudeSwitcher\`) rồi chạy. Không cần cài .NET.
 
 > Nên chọn thư mục cố định **trước** khi bật "Khởi động cùng Windows", vì Windows lưu đường dẫn exe lúc bật.
