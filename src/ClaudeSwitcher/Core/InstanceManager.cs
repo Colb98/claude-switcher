@@ -18,17 +18,19 @@ public static class InstanceManager
     /// second-instance handler restores, shows and focuses the window. Showing the window natively instead
     /// (ShowWindow) leaves Electron believing it is hidden, so it stops repainting and looks frozen.
     /// </summary>
-    public static void Launch(ProfileConfig profile)
+    public static void Launch(ProfileConfig profile, string? url = null)
     {
         var launcher = ClaudeInstall.FindLauncher()
             ?? throw new InvalidOperationException("Không tìm thấy Claude Desktop. Hãy cài Claude Desktop trước.");
-        var psi = new ProcessStartInfo(launcher) { UseShellExecute = true };
+        var args = new List<string>();
         if (!profile.IsDefault)
         {
             Directory.CreateDirectory(profile.DataDir!);
-            psi.Arguments = $"--user-data-dir=\"{profile.DataDir}\"";
+            args.Add($"--user-data-dir=\"{profile.DataDir}\"");
         }
-        Process.Start(psi);
+        // A claude:// link is passed the way Windows passes it; a running instance gets it through second-instance.
+        if (url != null) args.Add($"\"{url.Replace("\"", "")}\"");
+        Process.Start(new ProcessStartInfo(launcher, string.Join(" ", args)) { UseShellExecute = true });
     }
 
     /// <summary>

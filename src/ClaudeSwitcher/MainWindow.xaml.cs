@@ -400,6 +400,7 @@ public partial class MainWindow : Window
         ThemeCombo.SelectedIndex = Math.Max(0, Array.FindIndex(ThemeChoices, t => t.Mode == Settings.Theme));
         StartWithWindows.IsChecked = StartupManager.IsEnabled;
         StartMinimized.IsChecked = Settings.StartMinimized;
+        RouteLinks.IsChecked = LinkRouter.IsEnabled;
         RefreshCombo.ItemsSource = RefreshChoices.Select(s => s < 120 ? $"{s} giây" : $"{s / 60} phút").ToList();
         RefreshCombo.SelectedIndex = Math.Max(0, Array.IndexOf(RefreshChoices, Settings.UsageRefreshSeconds));
         WarnCombo.ItemsSource = WarnChoices.Select(v => $"{v}%").ToList();
@@ -412,6 +413,13 @@ public partial class MainWindow : Window
     {
         if (_loadingSettings) return;
         try { StartupManager.SetEnabled(StartWithWindows.IsChecked == true); SetStatus("Đã lưu cài đặt khởi động."); }
+        catch (Exception ex) { Error(ex.Message); }
+    }
+
+    void RouteLinks_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loadingSettings) return;
+        try { LinkRouter.SetEnabled(RouteLinks.IsChecked == true); SetStatus("Đã lưu cài đặt mở link."); }
         catch (Exception ex) { Error(ex.Message); }
     }
 

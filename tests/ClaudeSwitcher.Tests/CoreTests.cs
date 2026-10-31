@@ -218,3 +218,46 @@ public class McpSyncTests
         Assert.Equal("https://mcp.example.com/sse", (string?)def["args"]![2]);
     }
 }
+
+public class LinkRouterTests
+{
+    static readonly ProfileConfig Default = new() { Id = "default", Name = "Mặc định" };
+    static readonly ProfileConfig Work = new() { Id = "work", Name = "Work", DataDir = @"C:\p\work" };
+    static readonly ProfileConfig Fresh = new() { Id = "fresh", Name = "Fresh", DataDir = @"C:\p\fresh" };
+    static readonly ProfileConfig[] All = { Default, Work, Fresh };
+
+    [Theory]
+    [InlineData("claude://magic-link#abc:def", true)]
+    [InlineData("claude://sso-callback?code=1", true)]
+    [InlineData("claude://claude.ai/magic-link#abc:def", true)]
+    [InlineData("claude://new?q=hello", false)]
+    [InlineData("https://claude.ai/magic-link#a:b", false)]
+    public void Recognises_sign_in_links(string url, bool expected) =>
+        Assert.Equal(expected, LinkRouter.IsSignInLink(url));
+
+    [Fact]
+    public void Sign_in_link_goes_to_running_signed_out_profile()
+    {
+        var target = LinkRouter.PickTarget("claude://magic-link#a:b", All,
+            p => p == Fresh || p == Default ? DateTime.Now : null,
+            p => p != Fresh);
+        Assert.Same(Fresh, target);
+    }
+
+    [Fact]
+    public void Picks_the_most_recently_started_signed_out_profile()
+    {
+        var target = LinkRouter.PickTarget("claude://magic-link#a:b", All,
+            p => p == Work ? DateTime.Now : p == Fresh ? DateTime.Now.AddMinutes(-5) : null,
+            _ => false);
+        Assert.Same(Work, target);
+    }
+
+    [Fact]
+    public void Falls_back_to_default_profile()
+    {
+        // Signed-out but not running, and non sign-in links, both keep Windows' usual behaviour.
+        Assert.Same(Default, LinkRouter.PickTarget("claude://magic-link#a:b", All, p => p == Default ? DateTime.Now : null, p => p != Fresh));
+        Assert.Same(Default, LinkRouter.PickTarget("claude://new?q=hi", All, _ => DateTime.Now, _ => false));
+    }
+}

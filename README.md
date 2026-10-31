@@ -26,6 +26,7 @@ Chép `dist\ClaudeSwitcher.exe` vào một thư mục cố định (ví dụ `C:
    - Claude Desktop đang mở sẽ ghi đè thay đổi, nên app hỏi trước khi tắt các profile liên quan, rồi đề nghị mở profile đích khi chép xong.
 4. **MCP dùng chung:** tick profile cho từng server rồi bấm **Áp dụng**. Chỉ profile có thay đổi mới bị đụng tới. Nếu profile đó đang chạy, app tắt nó, ghi cấu hình rồi mở lại, vì Claude Desktop đang mở sẽ ghi đè file cấu hình. MCP khai báo trong `~\.claude.json` (dùng cho session Code) vốn đã dùng chung cho mọi profile.
 5. **Cài đặt:** bật "Khởi động cùng Windows". Muốn một profile tự mở khi bật máy, bấm **Sửa** trên profile đó và tick "Tự mở khi khởi động".
+   - **Mở link đăng nhập đúng profile:** Windows luôn mở link `claude://` (ví dụ link đăng nhập trong email) bằng profile Mặc định. Khi đăng nhập cho profile khác, cửa sổ Mặc định sẽ bị kẹt ở màn hình "Use verification code". Bật tuỳ chọn này thì Claude Switcher nhận link và chuyển link đăng nhập tới profile đang mở mà chưa đăng nhập; các link khác vẫn mở ở profile Mặc định. Nếu Windows hỏi mở link bằng ứng dụng nào, chọn Claude Switcher.
 6. **Khay hệ thống:** đóng cửa sổ chỉ thu app xuống khay. Muốn thoát hẳn, chuột phải icon ở khay và chọn **Thoát**.
 
 ### Dòng lệnh
@@ -35,6 +36,7 @@ Chép `dist\ClaudeSwitcher.exe` vào một thư mục cố định (ví dụ `C:
 | `ClaudeSwitcher.exe --launch <id>` | Mở một profile (dùng cho shortcut; nút "⋯ → Tạo shortcut" tạo sẵn) |
 | `ClaudeSwitcher.exe --stop <id>` | Tắt một profile |
 | `ClaudeSwitcher.exe --selftest report.txt` | Kiểm tra: tìm Claude, đọc token, usage, session, MCP (không ghi token ra file) |
+| `ClaudeSwitcher.exe --open-url <link>` | Mở một link `claude://` ở đúng profile (Windows tự gọi khi bật "Mở link đăng nhập đúng profile") |
 | `ClaudeSwitcher.exe --startup` | Chế độ khởi động cùng Windows |
 | `ClaudeSwitcher.exe --screenshot ui.png [--theme dark]` | Render các tab ra ảnh PNG để kiểm tra giao diện, không chiếm focus |
 

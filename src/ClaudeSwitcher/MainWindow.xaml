@@ -204,6 +204,10 @@
                                    Text="Khi bật máy, Claude Switcher chạy ở khay hệ thống và tự mở các profile có bật &quot;Tự mở khi khởi động&quot; (chỉnh trong nút Sửa của từng profile)."/>
                         <CheckBox x:Name="StartMinimized" Content="Thu nhỏ xuống khay khi khởi động cùng Windows"
                                   Checked="Settings_Changed" Unchecked="Settings_Changed" Margin="0,0,0,16"/>
+                        <CheckBox x:Name="RouteLinks" Content="Mở link đăng nhập đúng profile" FontSize="14"
+                                  Checked="RouteLinks_Changed" Unchecked="RouteLinks_Changed"/>
+                        <TextBlock Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="24,2,0,16"
+                                   Text="Link đăng nhập trong email (claude://) được gửi tới profile đang mở mà chưa đăng nhập, thay vì luôn mở profile Mặc định. Các link khác vẫn mở ở profile Mặc định. Nếu Windows hỏi mở link bằng ứng dụng nào, chọn Claude Switcher."/>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                             <TextBlock Text="Làm mới usage mỗi" VerticalAlignment="Center" Width="190"/>
                             <ComboBox x:Name="RefreshCombo" Width="120" SelectionChanged="Settings_Changed"/>

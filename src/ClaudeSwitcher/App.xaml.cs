@@ -30,6 +30,15 @@ public partial class App : Application
             return;
         }
 
+        // claude:// link handler (see LinkRouter): forward to the right profile and exit.
+        if (ArgValue(args, LinkRouter.OpenUrlArg) is { } url)
+        {
+            try { LinkRouter.Open(url, ProfileStore.Load().Profiles); }
+            catch (Exception ex) { MessageBox.Show(ex.Message, "Claude Switcher", MessageBoxButton.OK, MessageBoxImage.Error); }
+            Shutdown();
+            return;
+        }
+
         if (ArgValue(args, "--stop") is { } stopId)
         {
             var profile = ProfileStore.Load().Profiles.FirstOrDefault(p => p.Id == stopId);
