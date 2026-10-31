@@ -143,7 +143,9 @@ public partial class MainWindow : Window
         {
             if (InstanceManager.FindMainProcess(p.Config) != null)
             {
-                SetStatus($"{p.Name} đang chạy. Bấm vào biểu tượng Claude trên taskbar để chuyển tới cửa sổ đó.");
+                SetStatus(InstanceManager.BringToFront(p.Config)
+                    ? $"Đã đưa cửa sổ {p.Name} lên trước."
+                    : $"{p.Name} đang chạy nhưng chưa tìm thấy cửa sổ của nó, thử lại sau vài giây.");
                 return;
             }
             InstanceManager.Launch(p.Config);

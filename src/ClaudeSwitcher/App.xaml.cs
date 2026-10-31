@@ -25,7 +25,8 @@ public partial class App : Application
         if (ArgValue(args, "--launch") is { } launchId)
         {
             var profile = ProfileStore.Load().Profiles.FirstOrDefault(p => p.Id == launchId);
-            if (profile != null && InstanceManager.FindMainProcess(profile) == null) InstanceManager.Launch(profile);
+            if (profile != null && !InstanceManager.BringToFront(profile) && InstanceManager.FindMainProcess(profile) == null)
+                InstanceManager.Launch(profile);
             Shutdown();
             return;
         }
