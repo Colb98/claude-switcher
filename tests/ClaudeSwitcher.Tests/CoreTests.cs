@@ -219,6 +219,72 @@ public class McpSyncTests
     }
 }
 
+public sealed class NotificationRouterTests : IDisposable
+{
+    const string Opened = "2026-11-02 20:34:05 [info] [CCD] LocalSessions.setFocusedSession: sessionId=local_ec510697\n";
+    const string Cleared = "2026-11-02 20:34:05 [info] [CCD] LocalSessions.setFocusedSession: sessionId=null\n";
+    readonly string _log = Path.Combine(Path.GetTempPath(), "cs-test-" + Guid.NewGuid().ToString("N")[..8] + ".log");
+
+    public void Dispose() => File.Delete(_log);
+
+    [Fact]
+    public void InputHasTheNativeSize() => Assert.Equal(IntPtr.Size == 8 ? 40 : 28, NotificationRouter.InputSize);
+
+    [Fact]
+    public void MatchesAFlashingProcessToItsProfile()
+    {
+        var work = new ProfileConfig { Id = "work", DataDir = @"C:\p\work" };
+        var other = new ProfileConfig { Id = "other", DataDir = @"C:\p\other" };
+        var running = new Dictionary<string, int> { [@"C:\p\work"] = 10, [@"C:\p\default"] = 20 };
+        Assert.Same(work, NotificationRouter.ProfileForProcess(10, new[] { other, work }, running));
+        // The default profile's window, or any other app, is not a profile to route to.
+        Assert.Null(NotificationRouter.ProfileForProcess(20, new[] { other, work }, running));
+        Assert.Null(NotificationRouter.ProfileForProcess(99, new[] { other, work }, running));
+    }
+
+    [Fact]
+    public void FindsAChatOpenedAfterTheOffset()
+    {
+        File.WriteAllText(_log, "older line\n");
+        var offset = NotificationRouter.LogLength(_log);
+        Assert.False(NotificationRouter.SessionFocusedSince(_log, offset));
+        File.AppendAllText(_log, Cleared + Opened);
+        Assert.True(NotificationRouter.SessionFocusedSince(_log, offset));
+    }
+
+    [Fact]
+    public void IgnoresChatsOpenedBeforeTheOffsetAndClearedFocus()
+    {
+        File.WriteAllText(_log, Opened);
+        var offset = NotificationRouter.LogLength(_log);
+        File.AppendAllText(_log, Cleared + "other line\n");
+        Assert.False(NotificationRouter.SessionFocusedSince(_log, offset));
+    }
+
+    [Fact]
+    public void ReadsARotatedLogFromItsStart()
+    {
+        File.WriteAllText(_log, Opened);
+        Assert.True(NotificationRouter.SessionFocusedSince(_log, 1_000_000));
+    }
+
+    [Fact]
+    public void MissingLogHasNoActivity()
+    {
+        Assert.Equal(0, NotificationRouter.LogLength(_log));
+        Assert.False(NotificationRouter.SessionFocusedSince(_log, 0));
+    }
+
+    [Fact]
+    public void ReadsALogHeldOpenByClaude()
+    {
+        using var writer = new FileStream(_log, FileMode.Create, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete);
+        writer.Write(Encoding.UTF8.GetBytes(Opened));
+        writer.Flush();
+        Assert.True(NotificationRouter.SessionFocusedSince(_log, 0));
+    }
+}
+
 public class LinkRouterTests
 {
     static readonly ProfileConfig Default = new() { Id = "default", Name = "Mặc định" };

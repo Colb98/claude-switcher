@@ -208,6 +208,10 @@
                                    Text="{DynamicResource T.StartWithWindowsHint}"/>
                         <CheckBox x:Name="StartMinimized" Content="{DynamicResource T.StartMinimized}"
                                   Checked="Settings_Changed" Unchecked="Settings_Changed" Margin="0,0,0,16"/>
+                        <CheckBox x:Name="RouteNotifications" Content="{DynamicResource T.RouteNotifications}" FontSize="14"
+                                  Checked="Settings_Changed" Unchecked="Settings_Changed"/>
+                        <TextBlock Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="24,2,0,16"
+                                   Text="{DynamicResource T.RouteNotificationsHint}"/>
                         <CheckBox x:Name="RouteLinks" Content="{DynamicResource T.RouteLinks}" FontSize="14"
                                   Checked="RouteLinks_Changed" Unchecked="RouteLinks_Changed"/>
                         <TextBlock Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="24,2,0,16"

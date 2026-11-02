@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using ClaudeSwitcher.Core;
+using ClaudeSwitcher.UI;
 
 namespace ClaudeSwitcher;
 
@@ -15,6 +16,8 @@ public partial class App : Application
 
     Mutex? _mutex;
     EventWaitHandle? _showEvent;
+    NotificationRouter? _notificationRouter;
+    ShellFlashWatcher? _flashWatcher;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -72,6 +75,11 @@ public partial class App : Application
         var window = new MainWindow(startup, screenshot, ArgValue(args, "--theme"), ArgValue(args, "--lang"));
         MainWindow = window;
         if (!(startup && window.Settings.StartMinimized)) window.Show();
+        if (screenshot == null)
+        {
+            _notificationRouter = new NotificationRouter(() => window.Settings);
+            _flashWatcher = new ShellFlashWatcher(_notificationRouter.OnWindowFlashed);
+        }
 
         var listener = new Thread(() =>
         {
@@ -83,6 +91,8 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _flashWatcher?.Dispose();
+        _notificationRouter?.Dispose();
         _mutex?.Dispose();
         _showEvent?.Dispose();
         base.OnExit(e);

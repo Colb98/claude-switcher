@@ -99,6 +99,10 @@ public static class Loc
         ["RouteLinksHint"] = (
             "Sign-in links from email (claude://) go to the open profile that has not signed in yet, instead of always opening the Default profile. Other links still open in the Default profile. If Windows asks which app should open the link, choose Claude Switcher.",
             "Link đăng nhập trong email (claude://) được gửi tới profile đang mở mà chưa đăng nhập, thay vì luôn mở profile Mặc định. Các link khác vẫn mở ở profile Mặc định. Nếu Windows hỏi mở link bằng ứng dụng nào, chọn Claude Switcher."),
+        ["RouteNotifications"] = ("Focus the right profile when a notification is clicked", "Đưa đúng profile lên trước khi bấm notification"),
+        ["RouteNotificationsHint"] = (
+            "Windows gives the focus to the Default profile when you click a Claude notification. With this on, the profile that owns the notification comes to the front. It only works on the pop-up notification, not on one opened later from Notification Center.",
+            "Khi bấm notification của Claude, Windows đưa profile Mặc định lên trước. Bật tuỳ chọn này thì profile sở hữu notification sẽ được đưa lên. Chỉ có tác dụng với notification đang bật lên, không áp dụng khi mở lại từ Notification Center."),
         ["SetDefaultApp"] = ("Choose Claude Switcher in Windows Default apps", "Chọn Claude Switcher trong Default apps của Windows"),
         ["RefreshEvery"] = ("Refresh usage every", "Làm mới usage mỗi"),
         ["WarnAt"] = ("Warn when 5-hour usage ≥", "Cảnh báo khi usage 5 giờ ≥"),

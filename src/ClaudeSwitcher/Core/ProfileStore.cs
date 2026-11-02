@@ -24,6 +24,7 @@ public sealed class AppSettings
 {
     public List<ProfileConfig> Profiles { get; set; } = new();
     public bool StartMinimized { get; set; } = true;
+    public bool RouteNotifications { get; set; } = true;
     public int UsageRefreshSeconds { get; set; } = 120;
     public int WarnFiveHourPercent { get; set; } = 90;
     /// <summary>"System", "Light" or "Dark".</summary>

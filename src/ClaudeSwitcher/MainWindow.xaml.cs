@@ -411,6 +411,7 @@ public partial class MainWindow : Window
         ThemeCombo.SelectedIndex = Math.Max(0, Array.FindIndex(ThemeChoices, t => t.Mode == Settings.Theme));
         StartWithWindows.IsChecked = StartupManager.IsEnabled;
         StartMinimized.IsChecked = Settings.StartMinimized;
+        RouteNotifications.IsChecked = Settings.RouteNotifications;
         RouteLinks.IsChecked = LinkRouter.IsEnabled;
         UpdateLinkHint();
         RefreshCombo.ItemsSource = RefreshChoices.Select(s => s < 120 ? Loc.T("Seconds", s) : Loc.T("Minutes", s / 60)).ToList();
@@ -476,6 +477,7 @@ public partial class MainWindow : Window
     {
         if (_loadingSettings) return;
         Settings.StartMinimized = StartMinimized.IsChecked == true;
+        Settings.RouteNotifications = RouteNotifications.IsChecked == true;
         if (RefreshCombo.SelectedIndex >= 0) Settings.UsageRefreshSeconds = RefreshChoices[RefreshCombo.SelectedIndex];
         if (WarnCombo.SelectedIndex >= 0) Settings.WarnFiveHourPercent = WarnChoices[WarnCombo.SelectedIndex];
         _usageTimer.Interval = TimeSpan.FromSeconds(Settings.UsageRefreshSeconds);

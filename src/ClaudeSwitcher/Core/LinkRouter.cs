@@ -148,7 +148,7 @@ public static class LinkRouter
     public static string LogPath => System.IO.Path.Combine(ProfileStore.Root, "links.log");
 
     /// <summary>Keeps a short history of where links went, so "it opened the wrong window" can be checked.</summary>
-    static void Log(string line)
+    public static void Log(string line)
     {
         try
         {
