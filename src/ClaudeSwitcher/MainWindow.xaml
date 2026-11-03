@@ -191,6 +191,25 @@
                 </Grid>
             </TabItem>
 
+            <TabItem Header="{DynamicResource T.TabBackup}">
+                <Grid Background="{DynamicResource Card}">
+                    <StackPanel Margin="20" MaxWidth="640" HorizontalAlignment="Left">
+                        <TextBlock Text="{DynamicResource T.BackupIntro}" TextWrapping="Wrap" FontSize="14" Margin="0,0,0,12"/>
+                        <TextBlock Text="{DynamicResource T.BackupNoSignIn}" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                        <TextBlock Text="{DynamicResource T.BackupSecretsWarn}" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                        <TextBlock Text="{DynamicResource T.BackupRestoreOrder}" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="0,0,0,16"/>
+                        <WrapPanel Margin="0,0,0,12">
+                            <Button x:Name="BackupCreate" Content="{DynamicResource T.BackupCreate}" Style="{StaticResource Primary}" Click="BackupCreate_Click" Margin="0,0,8,0"/>
+                            <Button x:Name="BackupRestore" Content="{DynamicResource T.BackupRestore}" Click="BackupRestore_Click" Margin="0,0,8,0"/>
+                            <Button x:Name="BackupCancel" Content="{DynamicResource T.Cancel}" Click="BackupCancel_Click" Visibility="Collapsed"/>
+                        </WrapPanel>
+                        <ProgressBar x:Name="BackupBar" Maximum="100" Height="7" Margin="0,0,0,6" Visibility="Collapsed"/>
+                        <TextBlock x:Name="BackupProgressText" Foreground="{DynamicResource Muted}" FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,0,0,10"/>
+                        <TextBlock x:Name="BackupReport" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
             <TabItem Header="{DynamicResource T.TabSettings}">
                 <Grid Background="{DynamicResource Card}">
                     <StackPanel Margin="20" MaxWidth="640" HorizontalAlignment="Left">

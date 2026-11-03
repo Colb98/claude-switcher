@@ -207,5 +207,52 @@ public static class Loc
         ["FiveHour"] = ("5 hours", "5 giờ"),
         ["WeekAll"] = ("Week (all models)", "Tuần (mọi model)"),
         ["WeekModel"] = ("Week ({0})", "Tuần ({0})"),
+
+        // Backup and restore
+        ["TabBackup"] = ("Backup", "Sao lưu"),
+        ["BackupIntro"] = (
+            "Saves your Claude settings, Code sessions, MCP servers, skills, plugins and profiles into one .zip file, so you can uninstall Claude and pick up where you left off later.",
+            "Lưu cài đặt Claude, session Code, MCP, skills, plugins và các profile vào một file .zip, để bạn có thể gỡ Claude rồi dùng tiếp sau này."),
+        ["BackupNoSignIn"] = (
+            "Sign-in is not saved: after restoring, sign in to each profile again. Caches and files Claude can download again are left out too.",
+            "Không lưu thông tin đăng nhập: sau khi khôi phục, hãy đăng nhập lại từng profile. Cache và các file Claude có thể tải lại cũng không được lưu."),
+        ["BackupSecretsWarn"] = (
+            "The zip has no password. Keys written in MCP settings (env) and anything said in your sessions are inside it, so keep it private.",
+            "File zip không có mật khẩu. Key ghi trong cài đặt MCP (env) và mọi nội dung trong session đều nằm trong đó, nên hãy giữ file này riêng tư."),
+        ["BackupRestoreOrder"] = (
+            "To restore: install Claude, open it once and close it, then click Restore.",
+            "Để khôi phục: cài Claude, mở một lần rồi đóng, sau đó bấm Khôi phục."),
+        ["BackupCreate"] = ("Create backup...", "Tạo bản sao lưu..."),
+        ["BackupRestore"] = ("Restore...", "Khôi phục..."),
+        ["BackupFileFilter"] = ("Claude backup (*.zip)|*.zip", "Bản sao lưu Claude (*.zip)|*.zip"),
+        ["BackupInsideDataFolder"] = (
+            "This folder is part of Claude's data and may be deleted when you uninstall Claude. Save the backup here anyway?",
+            "Thư mục này thuộc dữ liệu của Claude và có thể bị xoá khi gỡ Claude. Vẫn lưu bản sao lưu ở đây?"),
+        ["BackupMustClose"] = (
+            "{0} must be closed so the saved data is complete. Close now?",
+            "Cần đóng {0} để dữ liệu được lưu đầy đủ. Đóng ngay?"),
+        ["BackupWriting"] = ("Saving {0}%: {1}", "Đang lưu {0}%: {1}"),
+        ["BackupVerifying"] = ("Checking the backup {0}%: {1}", "Đang kiểm tra bản sao lưu {0}%: {1}"),
+        ["BackupRestoring"] = ("Restoring {0}%: {1}", "Đang khôi phục {0}%: {1}"),
+        ["BackupCancelled"] = ("Cancelled.", "Đã huỷ."),
+        ["BackupDone"] = (
+            "Backup saved and checked: {0}\n{1} files, {2} of data, zip size {3}.",
+            "Đã lưu và kiểm tra bản sao lưu: {0}\n{1} file, {2} dữ liệu, file zip {3}."),
+        ["BackupSkipped"] = ("Could not save {0} item(s):", "Không lưu được {0} mục:"),
+        ["BackupMore"] = ("...and {0} more", "...và {0} mục nữa"),
+        ["BackupRestoreConfirm"] = (
+            "Restore this backup?\n\nCreated: {0}\nComputer: {1}\n{2} files, {3}\n\nFiles it replaces are kept in the backups folder. Open profiles will be closed.",
+            "Khôi phục bản sao lưu này?\n\nTạo lúc: {0}\nMáy: {1}\n{2} file, {3}\n\nCác file bị thay thế được giữ trong thư mục backup. Các profile đang mở sẽ bị đóng."),
+        ["BackupClaudeMissing"] = (
+            "\n\nClaude Desktop is not installed yet. Installing it first is recommended, so the data reaches the right folder.",
+            "\n\nClaude Desktop chưa được cài. Nên cài trước để dữ liệu về đúng thư mục."),
+        ["RestoreDone"] = (
+            "Restored {0} files, {1} already up to date. Sign in to each profile again.",
+            "Đã khôi phục {0} file, {1} file đã giống sẵn. Hãy đăng nhập lại từng profile."),
+        ["RestoreUndo"] = ("Replaced files are in: {0}", "Các file bị thay thế nằm ở: {0}"),
+        ["RestoreFailed"] = ("Could not restore {0} file(s):", "Không khôi phục được {0} file:"),
+        ["BackupBadFile"] = ("This file is not a Claude Switcher backup, or it is damaged.", "File này không phải bản sao lưu của Claude Switcher, hoặc đã bị hỏng."),
+        ["BackupBadPath"] = ("The backup contains an unsafe path, so nothing was restored: {0}", "Bản sao lưu có đường dẫn không an toàn nên chưa khôi phục gì: {0}"),
+        ["BackupVerifyFailed"] = ("The backup failed its check at {0}. Save it again, to another drive if possible.", "Bản sao lưu không qua được bước kiểm tra tại {0}. Hãy lưu lại, tốt nhất là sang ổ khác."),
     };
 }

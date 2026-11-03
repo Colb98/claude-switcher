@@ -57,6 +57,19 @@ public partial class App : Application
             return;
         }
 
+        if (ArgValue(args, "--backup") is { } backupPath)
+        {
+            Shutdown(Task.Run(() => BackupCli.Backup(backupPath)).GetAwaiter().GetResult());
+            return;
+        }
+
+        if (ArgValue(args, "--restore") is { } restorePath)
+        {
+            var to = ArgValue(args, "--to");
+            Shutdown(Task.Run(() => BackupCli.Restore(restorePath, to)).GetAwaiter().GetResult());
+            return;
+        }
+
         // Screenshot runs are diagnostics and may run beside the user's own instance.
         var screenshot = ArgValue(args, "--screenshot");
         if (screenshot == null)

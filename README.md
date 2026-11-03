@@ -8,6 +8,7 @@ A Windows app for running several **Claude Desktop** windows at once, each signe
 - **Live usage:** shows 5-hour, weekly (all models) and per-model weekly usage, with reset times, for every account. The numbers come from the same place Claude Desktop gets them: a call to `api.anthropic.com/api/oauth/usage` with that profile's own token, not from history files. When 5-hour usage crosses your threshold, the app warns you and suggests the profile with the most usage left.
 - **Move Code sessions** to another profile to keep working when you run out of usage. The conversation history is kept.
 - **Shared MCP:** choose which MCP servers each profile uses. Remote connectors can be added by URL.
+- **Backup and restore:** save Claude's settings, Code sessions, MCP servers, skills, plugins and profiles into one `.zip`, then restore them after reinstalling Claude.
 - **Start with Windows:** the app runs in the system tray and opens the profiles you picked.
 - **Light/dark theme:** choose Light, Dark or Match Windows in the Settings tab.
 - **English / Vietnamese:** the app starts in English. Switch with **Settings → Language**; the UI changes right away, no restart needed.
@@ -50,6 +51,18 @@ Requirements: Windows 10/11 with Claude Desktop installed.
 6. **System tray:** closing the window only hides the app to the tray.
    - **Left-click** the icon: a quick picker; click a profile once to open it. The **Open Claude Switcher** button at the bottom opens the main window. Click outside or press Esc to close the picker.
    - **Right-click** the icon: the full menu (open/stop each profile, refresh usage, **Exit** to quit the app).
+7. **Backup:** see [Backup and restore](#backup-and-restore).
+
+### Backup and restore
+
+In the **Backup** tab, **Create backup...** saves one `.zip` and reads it back to check it. Keep it outside the folders Claude uses, and keep the exe with it. To restore: install Claude, open it once and close it, then click **Restore...**. Files it replaces are moved to `backups\restore-<time>\`, and a Claude that is already signed in stays signed in.
+
+- **Saved:** `~\.claude` (session history, memory, skills, plugins, settings), MCP servers from `~\.claude.json`, and for each profile its `claude_desktop_config.json`, Code and Cowork session files, and app settings. Skills linked by a junction are saved as real folders.
+- **Not saved, on purpose:** sign-in (`.credentials.json`, tokens in `config.json`, cookies and browser storage). Sign in to each profile again after restoring, and sign in again to MCP servers that use OAuth. Code sessions are listed per account, so use the same account to see them in Desktop.
+- **Not saved, rebuilt by Claude:** caches, logs and the downloaded `claude-code` runtime.
+- **Not covered:** the claude.ai server keeps regular chats, so they are not in the zip. Programs that MCP servers run (`npx`, `uvx`, anything installed elsewhere) and `.claude` folders inside your own projects must be set up or kept separately.
+- **Keep the zip private:** it has no password, and it holds keys written in MCP settings (`env`) and everything said in your sessions.
+- **Another Windows user:** paths in the main config files follow the new home folder. Session history for projects under the old home folder keeps its old path. Only restore backups you made yourself, because a restored backup can set hooks and MCP commands that Claude will run.
 
 ### Command line
 
@@ -59,6 +72,8 @@ Requirements: Windows 10/11 with Claude Desktop installed.
 | `ClaudeSwitcher.exe --stop <id>` | Close one profile |
 | `ClaudeSwitcher.exe --selftest report.txt` | Check: find Claude, read tokens, usage, sessions, MCP (tokens are never written to the file) |
 | `ClaudeSwitcher.exe --open-url <link>` | Open a `claude://` link in the right profile (Windows calls this when "Open sign-in links in the right profile" is on) |
+| `ClaudeSwitcher.exe --backup <file.zip>` | Create a backup; the result is written to `<file.zip>.report.txt`. Close Claude first, because it does not close profiles for you |
+| `ClaudeSwitcher.exe --restore <file.zip> [--to <folder>]` | Restore a backup, refusing while a profile is open; `--to` unpacks into a test folder instead of Claude's real data |
 | `ClaudeSwitcher.exe --startup` | Start-with-Windows mode |
 | `ClaudeSwitcher.exe --screenshot ui.png [--theme dark] [--lang vi]` | Render every tab to PNG to review the UI, without taking focus |
 

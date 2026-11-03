@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -42,6 +43,7 @@ public partial class MainWindow : Window
     bool _loadingSettings;
     bool _exiting;
     bool _refreshing;
+    CancellationTokenSource? _backupCancel;
 
     public MainWindow(bool fromStartup, string? screenshotPath, string? themeOverride = null, string? languageOverride = null)
     {
@@ -398,6 +400,144 @@ public partial class MainWindow : Window
             ReloadMcp();
         }
         catch (Exception ex) { Error(ex.Message); }
+    }
+
+    // ---------- Backup ----------
+
+    async void BackupCreate_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = Loc.T("BackupFileFilter"),
+            FileName = $"claude-backup-{DateTime.Now:yyyyMMdd-HHmm}.zip",
+        };
+        if (dlg.ShowDialog(this) != true) return;
+        var roots = BackupRoots.Current();
+        if (BackupService.IsInsideDataFolders(dlg.FileName, roots) &&
+            MessageBox.Show(this, Loc.T("BackupInsideDataFolder"), Loc.T("TabBackup"),
+                MessageBoxButton.OKCancel, MessageBoxImage.Warning) != MessageBoxResult.OK)
+            return;
+        if (!CloseRunningProfiles("BackupMustClose")) return;
+
+        await RunBackupTask(async (progress, ct) =>
+        {
+            var result = await Task.Run(() => BackupService.Create(dlg.FileName, roots, progress, ct));
+            return Loc.T("BackupDone", result.ZipPath, result.Files, FormatSize(result.SourceBytes), FormatSize(result.ZipBytes)) +
+                   ListProblems("BackupSkipped", result.Skipped);
+        });
+    }
+
+    async void BackupRestore_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = Loc.T("BackupFileFilter") };
+        if (dlg.ShowDialog(this) != true) return;
+        BackupManifest manifest;
+        try { manifest = BackupService.Inspect(dlg.FileName); }
+        catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)
+        {
+            Error(ex.Message);
+            return;
+        }
+        var question = Loc.T("BackupRestoreConfirm", manifest.CreatedAt.LocalDateTime.ToString("g"), manifest.MachineName,
+                           manifest.Files.Count, FormatSize(manifest.Files.Sum(f => f.Length))) +
+                       (ClaudeInstall.FindLauncher() == null ? Loc.T("BackupClaudeMissing") : "");
+        if (MessageBox.Show(this, question, Loc.T("TabBackup"), MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
+            return;
+        // An open Claude Desktop would write its own copy back over what is restored.
+        foreach (var p in _profiles.Where(p => InstanceManager.FindMainProcess(p.Config) != null).ToList())
+            InstanceManager.Stop(p.Config);
+        RefreshRunning();
+
+        var roots = BackupRoots.CurrentFor(manifest);
+        await RunBackupTask(async (progress, ct) =>
+        {
+            var result = await Task.Run(() => BackupService.Restore(dlg.FileName, roots, progress, ct));
+            ReloadSettings();
+            return Loc.T("RestoreDone", result.Restored, result.Unchanged) +
+                   (result.UndoDir != null ? "\n" + Loc.T("RestoreUndo", result.UndoDir) : "") +
+                   ListProblems("RestoreFailed", result.Failed);
+        });
+    }
+
+    void BackupCancel_Click(object sender, RoutedEventArgs e) => _backupCancel?.Cancel();
+
+    bool CloseRunningProfiles(string questionKey)
+    {
+        var running = _profiles.Where(p => InstanceManager.FindMainProcess(p.Config) != null).ToList();
+        if (running.Count == 0) return true;
+        var names = string.Join(", ", running.Select(p => $"\"{p.Name}\""));
+        if (MessageBox.Show(this, Loc.T(questionKey, names), Loc.T("TabBackup"),
+                MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
+            return false;
+        foreach (var p in running) InstanceManager.Stop(p.Config);
+        RefreshRunning();
+        return true;
+    }
+
+    async Task RunBackupTask(Func<IProgress<BackupProgress>, CancellationToken, Task<string>> work)
+    {
+        using var cancel = new CancellationTokenSource();
+        _backupCancel = cancel;
+        SetBackupBusy(true);
+        BackupReport.Text = "";
+        var progress = new Progress<BackupProgress>(p =>
+        {
+            BackupBar.Value = p.Percent;
+            var key = p.Stage switch
+            {
+                BackupStage.Writing => "BackupWriting",
+                BackupStage.Verifying => "BackupVerifying",
+                _ => "BackupRestoring",
+            };
+            BackupProgressText.Text = Loc.T(key, p.Percent, p.Current);
+        });
+        try { BackupReport.Text = await work(progress, cancel.Token); }
+        catch (OperationCanceledException) { BackupReport.Text = Loc.T("BackupCancelled"); }
+        catch (Exception ex) { BackupReport.Text = ex.Message; }
+        finally
+        {
+            _backupCancel = null;
+            SetBackupBusy(false);
+        }
+    }
+
+    void SetBackupBusy(bool busy)
+    {
+        BackupCreate.IsEnabled = BackupRestore.IsEnabled = !busy;
+        BackupCancel.Visibility = BackupBar.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
+        if (!busy) BackupProgressText.Text = "";
+    }
+
+    static string ListProblems(string titleKey, IReadOnlyList<string> items)
+    {
+        const int shown = 8;
+        if (items.Count == 0) return "";
+        var lines = items.Take(shown).Select(i => "  " + i);
+        var more = items.Count > shown ? "\n  " + Loc.T("BackupMore", items.Count - shown) : "";
+        return "\n\n" + Loc.T(titleKey, items.Count) + "\n" + string.Join("\n", lines) + more;
+    }
+
+    static string FormatSize(long bytes) => bytes >= 1L << 30
+        ? $"{bytes / (double)(1L << 30):0.0} GB"
+        : $"{bytes / (double)(1L << 20):0.0} MB";
+
+    /// <summary>Picks up restored settings in place, because the notification router keeps using this same object.</summary>
+    void ReloadSettings()
+    {
+        var loaded = ProfileStore.Load();
+        Settings.Profiles = loaded.Profiles;
+        Settings.StartMinimized = loaded.StartMinimized;
+        Settings.RouteNotifications = loaded.RouteNotifications;
+        Settings.UsageRefreshSeconds = loaded.UsageRefreshSeconds;
+        Settings.WarnFiveHourPercent = loaded.WarnFiveHourPercent;
+        Settings.Theme = loaded.Theme;
+        Settings.Language = loaded.Language;
+        Theme.Apply(Settings.Theme);
+        Theme.ApplyLanguage(Settings.Language);
+        _usageTimer.Interval = TimeSpan.FromSeconds(Math.Max(30, Settings.UsageRefreshSeconds));
+        LoadSettingsUi();
+        RebuildProfiles();
+        LoadSessions();
     }
 
     // ---------- Settings ----------
