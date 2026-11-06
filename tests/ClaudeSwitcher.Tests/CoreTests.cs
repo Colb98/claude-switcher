@@ -334,3 +334,24 @@ public class LinkRouterTests
         Assert.Same(Default, LinkRouter.PickTarget("claude://new?q=hi", All, _ => DateTime.Now, _ => false));
     }
 }
+
+public class UsageCacheTests
+{
+    [Fact]
+    public void Cache_round_trips_report_and_backoff()
+    {
+        using var p = new FakeProfile(); // points CLAUDE_SWITCHER_HOME at a temp folder
+        var report = new UsageReport(UsageStatus.Ok, null,
+            new UsageWindow("5h", 42, DateTimeOffset.Now.AddHours(2)), new UsageWindow("week", 10, null),
+            new[] { new UsageWindow("Week (Fable)", 3, null) }, "a@b.c", "Pro", DateTimeOffset.Now, Stale: true);
+        var until = DateTimeOffset.Now.AddMinutes(5);
+        UsageCache.Put(p.Dir, report, until);
+
+        var back = UsageCache.Get(p.Dir.ToUpperInvariant() + "\\");
+        Assert.NotNull(back?.Report);
+        Assert.Equal(42, back!.Report!.FiveHour!.Percent);
+        Assert.Equal("Week (Fable)", Assert.Single(back.Report.ScopedWeekly).Label);
+        Assert.False(back.Report.Stale); // stored as a plain good report
+        Assert.Equal(until.ToUnixTimeSeconds(), back.BackoffUntil!.Value.ToUnixTimeSeconds());
+    }
+}

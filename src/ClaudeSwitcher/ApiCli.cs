@@ -80,7 +80,8 @@ public static class ApiCli
     {
         var service = new UsageService();
         var profiles = ProfileStore.Load().Profiles.Where(p => id == null || p.Id == id).ToList();
-        var tasks = profiles.Select(async p => (p, r: await service.FetchAsync(p.ResolveDataDir()))).ToList();
+        // The tray app refreshes every couple of minutes; reuse its numbers instead of polling the same token again.
+        var tasks = profiles.Select(async p => (p, r: await service.FetchAsync(p.ResolveDataDir(), TimeSpan.FromSeconds(150)))).ToList();
         var arr = new JsonArray();
         foreach (var (p, r) in await Task.WhenAll(tasks))
         {
@@ -95,6 +96,7 @@ public static class ApiCli
                 ["weekly"] = Window(r.Weekly),
                 ["scoped"] = new JsonArray(r.ScopedWeekly.Select(w => (JsonNode?)Window(w)).ToArray()),
                 ["fetchedAt"] = r.FetchedAt.ToUnixTimeMilliseconds(),
+                ["stale"] = r.Stale,
             });
         }
         return arr;

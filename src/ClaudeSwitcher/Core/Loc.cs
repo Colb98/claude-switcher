@@ -112,6 +112,7 @@ public static class Loc
         ["Minutes"] = ("{0} minutes", "{0} phút"),
         ["LauncherInfo"] = ("Claude Desktop: {0}\nDefault profile data: {1}\nApp data: {2}", "Claude Desktop: {0}\nDữ liệu profile mặc định: {1}\nDữ liệu app: {2}"),
         ["NotFound"] = ("not found", "không tìm thấy"),
+        ["UsageRateLimited"] = ("Usage server is busy (429): showing the last numbers", "Máy chủ usage đang bận (429): đang hiện số liệu gần nhất"),
         ["RunRemote"] = ("Claude Remote: use Claude Code from your phone", "Claude Remote: dùng Claude Code từ điện thoại"),
         ["RunRemoteHint"] = (
             "Runs the Claude Remote web app on this PC while Claude Switcher runs. Open it on your phone over Tailscale (see remote/README.md).",
