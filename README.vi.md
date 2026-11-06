@@ -11,6 +11,7 @@
 - **Sao lưu và khôi phục:** lưu cài đặt Claude, session Code, MCP, skills, plugins và các profile vào một file `.zip`, rồi khôi phục sau khi cài lại Claude.
 - **Khởi động cùng Windows:** app chạy ở khay hệ thống và tự mở các profile đã chọn.
 - **Giao diện sáng/tối:** chọn Sáng, Tối hoặc Theo Windows trong tab Cài đặt.
+- **Claude Remote (điện thoại):** dùng Claude Code trên PC này từ điện thoại qua Tailscale, bằng tài khoản của bất kỳ profile nào: web app hiển thị session như tab Code của Desktop, có usage, duyệt quyền, đính kèm và chọn model. Bật ở **Settings → Claude Remote**; cách cài trong [remote/README.md](remote/README.md).
 - **Tiếng Anh / tiếng Việt:** app mặc định dùng tiếng Anh. Đổi sang tiếng Việt ở **Settings → Language → Tiếng Việt**; giao diện đổi ngay, không cần khởi động lại.
 
 ## Cài đặt
@@ -73,6 +74,7 @@ Trong tab **Sao lưu**, **Tạo bản sao lưu...** lưu một file `.zip` rồi
 | `ClaudeSwitcher.exe --restore <file.zip> [--to <thư mục>]` | Khôi phục bản sao lưu, từ chối khi còn profile đang mở; `--to` giải nén vào thư mục thử thay vì dữ liệu thật của Claude |
 | `ClaudeSwitcher.exe --startup` | Chế độ khởi động cùng Windows |
 | `ClaudeSwitcher.exe --screenshot ui.png [--theme dark] [--lang vi]` | Render các tab ra ảnh PNG để kiểm tra giao diện, không chiếm focus |
+| `ClaudeSwitcher.exe --api profiles|usage [id]|token <id>|launch <id>|stop <id>` | In JSON ra stdout cho Claude Remote (chỉ có stdout khi tiến trình gọi chuyển hướng nó). `token` in token đăng nhập của profile: chỉ cùng user Windows mới gọi được, giống file token gốc |
 
 ## Dữ liệu
 

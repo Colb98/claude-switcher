@@ -11,6 +11,7 @@ A Windows app for running several **Claude Desktop** windows at once, each signe
 - **Backup and restore:** save Claude's settings, Code sessions, MCP servers, skills, plugins and profiles into one `.zip`, then restore them after reinstalling Claude.
 - **Start with Windows:** the app runs in the system tray and opens the profiles you picked.
 - **Light/dark theme:** choose Light, Dark or Match Windows in the Settings tab.
+- **Claude Remote (phone):** use Claude Code on this PC from your phone over Tailscale, with any profile's account: a web app that shows sessions like Desktop's Code tab, with usage, approvals, attachments and model choice. Turn it on in **Settings → Claude Remote**; setup is in [remote/README.md](remote/README.md).
 - **English / Vietnamese:** the app starts in English. Switch with **Settings → Language**; the UI changes right away, no restart needed.
 
 ## Install
@@ -47,6 +48,7 @@ Requirements: Windows 10/11 with Claude Desktop installed.
 5. **Settings:** turn on "Start with Windows". To have a profile open when you sign in to Windows, click **Edit** on that profile and tick "Open at startup with Windows".
    - **Focus the right profile when a notification is clicked** (on by default): every profile shares one Windows app identity, so clicking a Claude notification gives the focus to the Default profile while the profile that owns it opens the chat behind it. With this on, Claude Switcher brings the owning profile to the front. It recognises the owning profile by how it reacts to the click (its taskbar flash or a line in its log), and only works on the pop-up notification: one opened later from Notification Center still goes to the Default profile. After a notification click Claude does not show new content until its window is clicked, so Claude Switcher also sends one click to the empty margin left of the chat, without moving your mouse pointer. The message box may lose its cursor as a result.
    - **Open sign-in links in the right profile:** Windows always opens `claude://` links (such as the sign-in link in an email) in the Default profile. When you sign in to another profile, the Default window gets stuck on the "Use verification code" screen. With this option on, Claude Switcher receives the link and sends sign-in links to the open profile that has not signed in yet; other links still open in the Default profile. Windows doesn't let an app make itself the default link handler, so when you turn this on the app opens Claude Switcher's page in Settings → Default apps; click the CLAUDE row and choose Claude Switcher.
+   - **Claude Remote:** runs the phone web app's server (`remoteridge`, needs Node.js) while Claude Switcher runs, and restarts it if it stops. See [remote/README.md](remote/README.md).
    - **Language:** English or Tiếng Việt.
 6. **System tray:** closing the window only hides the app to the tray.
    - **Left-click** the icon: a quick picker; click a profile once to open it. The **Open Claude Switcher** button at the bottom opens the main window. Click outside or press Esc to close the picker.
@@ -76,6 +78,7 @@ In the **Backup** tab, **Create backup...** saves one `.zip` and reads it back t
 | `ClaudeSwitcher.exe --restore <file.zip> [--to <folder>]` | Restore a backup, refusing while a profile is open; `--to` unpacks into a test folder instead of Claude's real data |
 | `ClaudeSwitcher.exe --startup` | Start-with-Windows mode |
 | `ClaudeSwitcher.exe --screenshot ui.png [--theme dark] [--lang vi]` | Render every tab to PNG to review the UI, without taking focus |
+| `ClaudeSwitcher.exe --api profiles|usage [id]|token <id>|launch <id>|stop <id>` | JSON on stdout for Claude Remote (stdout only exists when the caller redirects it). `token` prints the profile's sign-in token: same-user access only, like the token files themselves |
 
 ## Data
 

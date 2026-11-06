@@ -237,6 +237,11 @@
                                    Text="{DynamicResource T.RouteLinksHint}"/>
                         <Button x:Name="SetDefaultApp" Content="{DynamicResource T.SetDefaultApp}" Click="SetDefaultApp_Click"
                                 HorizontalAlignment="Left" Margin="24,-8,0,16" Visibility="Collapsed"/>
+                        <CheckBox x:Name="RunRemote" Content="{DynamicResource T.RunRemote}" FontSize="14"
+                                  Checked="RunRemote_Changed" Unchecked="RunRemote_Changed"/>
+                        <TextBlock Foreground="{DynamicResource Muted}" TextWrapping="Wrap" Margin="24,2,0,2"
+                                   Text="{DynamicResource T.RunRemoteHint}"/>
+                        <TextBlock x:Name="RemoteStatus" Foreground="{DynamicResource Muted}" TextWrapping="Wrap" FontSize="12" Margin="24,0,0,16"/>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
                             <TextBlock Text="{DynamicResource T.RefreshEvery}" VerticalAlignment="Center" Width="190"/>
                             <ComboBox x:Name="RefreshCombo" Width="120" SelectionChanged="Settings_Changed"/>

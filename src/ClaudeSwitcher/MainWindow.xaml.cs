@@ -34,6 +34,7 @@ public partial class MainWindow : Window
     readonly ObservableCollection<ProfileViewModel> _profiles = new();
     readonly ObservableCollection<McpRow> _mcpRows = new();
     readonly UsageService _usage = new();
+    readonly RemoteBridge _remote = new();
     readonly DispatcherTimer _usageTimer = new();
     readonly DispatcherTimer _processTimer = new() { Interval = TimeSpan.FromSeconds(4) };
     readonly HashSet<string> _warned = new();
@@ -106,6 +107,9 @@ public partial class MainWindow : Window
         };
         if (fromStartup) AutoStartProfiles();
         else if (_screenshotPath != null) Show();
+
+        _remote.StatusChanged += s => Dispatcher.BeginInvoke(() => RemoteStatus.Text = s);
+        if (Settings.RunRemote && _screenshotPath == null) _remote.Start(Settings.RemoteScript);
     }
 
     // ---------- Profiles ----------
@@ -532,6 +536,8 @@ public partial class MainWindow : Window
         Settings.WarnFiveHourPercent = loaded.WarnFiveHourPercent;
         Settings.Theme = loaded.Theme;
         Settings.Language = loaded.Language;
+        Settings.RunRemote = loaded.RunRemote;
+        Settings.RemoteScript = loaded.RemoteScript;
         Theme.Apply(Settings.Theme);
         Theme.ApplyLanguage(Settings.Language);
         _usageTimer.Interval = TimeSpan.FromSeconds(Math.Max(30, Settings.UsageRefreshSeconds));
@@ -553,6 +559,9 @@ public partial class MainWindow : Window
         StartMinimized.IsChecked = Settings.StartMinimized;
         RouteNotifications.IsChecked = Settings.RouteNotifications;
         RouteLinks.IsChecked = LinkRouter.IsEnabled;
+        RunRemote.IsChecked = Settings.RunRemote;
+        RemoteStatus.Text = Settings.RunRemote ? _remote.Status
+            : RemoteBridge.FindScript(Settings.RemoteScript) is { } script ? Loc.T("RemoteFound", script) : Loc.T("RemoteNoScript");
         UpdateLinkHint();
         RefreshCombo.ItemsSource = RefreshChoices.Select(s => s < 120 ? Loc.T("Seconds", s) : Loc.T("Minutes", s / 60)).ToList();
         RefreshCombo.SelectedIndex = Math.Max(0, Array.IndexOf(RefreshChoices, Settings.UsageRefreshSeconds));
@@ -586,6 +595,14 @@ public partial class MainWindow : Window
     }
 
     void SetDefaultApp_Click(object sender, RoutedEventArgs e) => LinkRouter.OpenDefaultAppsSettings();
+
+    void RunRemote_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loadingSettings) return;
+        Settings.RunRemote = RunRemote.IsChecked == true;
+        ProfileStore.Save(Settings);
+        if (Settings.RunRemote) _remote.Start(Settings.RemoteScript); else _remote.Stop();
+    }
 
     /// <summary>Shows the "set in Windows" button while the option is on but Windows still opens links in Claude.</summary>
     void UpdateLinkHint() =>
@@ -675,6 +692,7 @@ public partial class MainWindow : Window
     void ExitApp()
     {
         _exiting = true;
+        _remote.Stop();
         _tray.Visible = false;
         _tray.Dispose();
         Close();

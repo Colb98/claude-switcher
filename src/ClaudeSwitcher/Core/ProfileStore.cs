@@ -31,6 +31,10 @@ public sealed class AppSettings
     public string Theme { get; set; } = "System";
     /// <summary>"en" or "vi".</summary>
     public string Language { get; set; } = Loc.English;
+    /// <summary>Run Claude Remote's bridge (phone access over Tailscale) while this app runs.</summary>
+    public bool RunRemote { get; set; }
+    /// <summary>Path to remoteridgedistserver.js; found beside the exe when empty.</summary>
+    public string? RemoteScript { get; set; }
 }
 
 /// <summary>

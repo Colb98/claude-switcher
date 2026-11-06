@@ -112,6 +112,18 @@ public static class Loc
         ["Minutes"] = ("{0} minutes", "{0} phút"),
         ["LauncherInfo"] = ("Claude Desktop: {0}\nDefault profile data: {1}\nApp data: {2}", "Claude Desktop: {0}\nDữ liệu profile mặc định: {1}\nDữ liệu app: {2}"),
         ["NotFound"] = ("not found", "không tìm thấy"),
+        ["RunRemote"] = ("Claude Remote: use Claude Code from your phone", "Claude Remote: dùng Claude Code từ điện thoại"),
+        ["RunRemoteHint"] = (
+            "Runs the Claude Remote web app on this PC while Claude Switcher runs. Open it on your phone over Tailscale (see remote/README.md).",
+            "Chạy web app Claude Remote trên PC này trong lúc Claude Switcher chạy. Mở nó trên điện thoại qua Tailscale (xem remote/README.md)."),
+        ["RemoteRunning"] = ("Running on http://127.0.0.1:{0}", "Đang chạy ở http://127.0.0.1:{0}"),
+        ["RemoteStopped"] = ("Stopped", "Đã dừng"),
+        ["RemoteRestarting"] = ("Stopped unexpectedly, restarting…", "Bị dừng đột ngột, đang chạy lại…"),
+        ["RemoteCrashed"] = ("Keeps stopping. See the log: {0}", "Liên tục bị dừng. Xem log: {0}"),
+        ["RemoteExternal"] = ("Port {0} is already in use (another Claude Remote may be running)", "Cổng {0} đang bận (có thể Claude Remote khác đang chạy)"),
+        ["RemoteNoNode"] = ("Node.js not found. Install Node.js 22 or later.", "Không tìm thấy Node.js. Cài Node.js 22 trở lên."),
+        ["RemoteNoScript"] = ("Claude Remote not found: build remote/ (npm run build) next to this exe.", "Không tìm thấy Claude Remote: build remote/ (npm run build) cạnh file exe này."),
+        ["RemoteFound"] = ("Found: {0}", "Tìm thấy: {0}"),
 
         // Status bar and messages
         ["OpenFailed"] = ("Could not open {0}: {1}", "Không mở được {0}: {1}"),

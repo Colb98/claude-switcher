@@ -50,6 +50,14 @@ public partial class App : Application
             return;
         }
 
+        if (ArgValue(args, "--api") is { } apiCommand)
+        {
+            var api = Array.IndexOf(args, "--api");
+            var id = api + 2 < args.Length && !args[api + 2].StartsWith("--") ? args[api + 2] : null;
+            Shutdown(Task.Run(() => ApiCli.Run(apiCommand, id, ArgValue(args, "--out"))).GetAwaiter().GetResult());
+            return;
+        }
+
         if (ArgValue(args, "--selftest") is { } reportPath)
         {
             var code = Task.Run(() => SelfTest.Run(reportPath)).GetAwaiter().GetResult();
