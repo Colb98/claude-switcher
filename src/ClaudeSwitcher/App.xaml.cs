@@ -54,7 +54,7 @@ public partial class App : Application
         {
             var api = Array.IndexOf(args, "--api");
             var id = api + 2 < args.Length && !args[api + 2].StartsWith("--") ? args[api + 2] : null;
-            Shutdown(Task.Run(() => ApiCli.Run(apiCommand, id, ArgValue(args, "--out"))).GetAwaiter().GetResult());
+            Shutdown(Task.Run(() => ApiCli.Run(apiCommand, id, ArgValue(args, "--out"), ArgValue(args, "--session"))).GetAwaiter().GetResult());
             return;
         }
 

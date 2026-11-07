@@ -20,7 +20,7 @@ public static class ApiCli
 {
     static readonly JsonSerializerOptions Json = new() { WriteIndented = false };
 
-    public static async Task<int> Run(string command, string? id, string? outFile)
+    public static async Task<int> Run(string command, string? id, string? outFile, string? session = null)
     {
         JsonNode reply;
         int code = 0;
@@ -33,6 +33,7 @@ public static class ApiCli
                 "token" => Token(Require(id)),
                 "launch" => Launch(Require(id)),
                 "stop" => new JsonObject { ["ok"] = InstanceManager.Stop(Require(id)) },
+                "resume" => Resume(Require(id), session),
                 _ => throw new ArgumentException($"unknown command '{command}'"),
             };
         }
@@ -123,6 +124,19 @@ public static class ApiCli
             ["apiHost"] = cred.ApiHost,
             ["subscriptionType"] = cred.SubscriptionType,
         };
+    }
+
+    /// <summary>
+    /// Shows a Claude Code session started elsewhere (Claude Remote) in this profile's Claude Desktop. Desktop only reads
+    /// its session folder at startup; its claude://claude.ai/resume?session=<id> link imports a CLI transcript into the
+    /// running app as local_<id> (starting Desktop when it is closed).
+    /// </summary>
+    static JsonNode Resume(ProfileConfig p, string? session)
+    {
+        if (session == null || !Guid.TryParse(session, out _)) throw new ArgumentException("--session <cli session uuid> required");
+        var running = InstanceManager.FindMainProcess(p) != null;
+        InstanceManager.Launch(p, $"claude://claude.ai/resume?session={session}");
+        return new JsonObject { ["ok"] = true, ["sessionId"] = $"local_{session}", ["wasRunning"] = running };
     }
 
     static JsonNode Launch(ProfileConfig p)
