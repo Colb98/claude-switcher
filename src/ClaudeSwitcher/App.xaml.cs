@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using ClaudeSwitcher.Core;
+using ClaudeSwitcher.UI;
 
 namespace ClaudeSwitcher;
 
@@ -15,6 +16,8 @@ public partial class App : Application
 
     Mutex? _mutex;
     EventWaitHandle? _showEvent;
+    NotificationRouter? _notificationRouter;
+    ShellFlashWatcher? _flashWatcher;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -47,10 +50,31 @@ public partial class App : Application
             return;
         }
 
+        if (ArgValue(args, "--api") is { } apiCommand)
+        {
+            var api = Array.IndexOf(args, "--api");
+            var id = api + 2 < args.Length && !args[api + 2].StartsWith("--") ? args[api + 2] : null;
+            Shutdown(Task.Run(() => ApiCli.Run(apiCommand, id, ArgValue(args, "--out"))).GetAwaiter().GetResult());
+            return;
+        }
+
         if (ArgValue(args, "--selftest") is { } reportPath)
         {
             var code = Task.Run(() => SelfTest.Run(reportPath)).GetAwaiter().GetResult();
             Shutdown(code);
+            return;
+        }
+
+        if (ArgValue(args, "--backup") is { } backupPath)
+        {
+            Shutdown(Task.Run(() => BackupCli.Backup(backupPath)).GetAwaiter().GetResult());
+            return;
+        }
+
+        if (ArgValue(args, "--restore") is { } restorePath)
+        {
+            var to = ArgValue(args, "--to");
+            Shutdown(Task.Run(() => BackupCli.Restore(restorePath, to)).GetAwaiter().GetResult());
             return;
         }
 
@@ -72,6 +96,11 @@ public partial class App : Application
         var window = new MainWindow(startup, screenshot, ArgValue(args, "--theme"), ArgValue(args, "--lang"));
         MainWindow = window;
         if (!(startup && window.Settings.StartMinimized)) window.Show();
+        if (screenshot == null)
+        {
+            _notificationRouter = new NotificationRouter(() => window.Settings);
+            _flashWatcher = new ShellFlashWatcher(_notificationRouter.OnWindowFlashed);
+        }
 
         var listener = new Thread(() =>
         {
@@ -83,6 +112,8 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        _flashWatcher?.Dispose();
+        _notificationRouter?.Dispose();
         _mutex?.Dispose();
         _showEvent?.Dispose();
         base.OnExit(e);

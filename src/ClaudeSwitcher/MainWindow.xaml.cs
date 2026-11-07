@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -33,6 +34,7 @@ public partial class MainWindow : Window
     readonly ObservableCollection<ProfileViewModel> _profiles = new();
     readonly ObservableCollection<McpRow> _mcpRows = new();
     readonly UsageService _usage = new();
+    readonly RemoteBridge _remote = new();
     readonly DispatcherTimer _usageTimer = new();
     readonly DispatcherTimer _processTimer = new() { Interval = TimeSpan.FromSeconds(4) };
     readonly HashSet<string> _warned = new();
@@ -42,6 +44,7 @@ public partial class MainWindow : Window
     bool _loadingSettings;
     bool _exiting;
     bool _refreshing;
+    CancellationTokenSource? _backupCancel;
 
     public MainWindow(bool fromStartup, string? screenshotPath, string? themeOverride = null, string? languageOverride = null)
     {
@@ -104,6 +107,9 @@ public partial class MainWindow : Window
         };
         if (fromStartup) AutoStartProfiles();
         else if (_screenshotPath != null) Show();
+
+        _remote.StatusChanged += s => Dispatcher.BeginInvoke(() => RemoteStatus.Text = s);
+        if (Settings.RunRemote && _screenshotPath == null) _remote.Start(Settings.RemoteScript);
     }
 
     // ---------- Profiles ----------
@@ -400,6 +406,146 @@ public partial class MainWindow : Window
         catch (Exception ex) { Error(ex.Message); }
     }
 
+    // ---------- Backup ----------
+
+    async void BackupCreate_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = Loc.T("BackupFileFilter"),
+            FileName = $"claude-backup-{DateTime.Now:yyyyMMdd-HHmm}.zip",
+        };
+        if (dlg.ShowDialog(this) != true) return;
+        var roots = BackupRoots.Current();
+        if (BackupService.IsInsideDataFolders(dlg.FileName, roots) &&
+            MessageBox.Show(this, Loc.T("BackupInsideDataFolder"), Loc.T("TabBackup"),
+                MessageBoxButton.OKCancel, MessageBoxImage.Warning) != MessageBoxResult.OK)
+            return;
+        if (!CloseRunningProfiles("BackupMustClose")) return;
+
+        await RunBackupTask(async (progress, ct) =>
+        {
+            var result = await Task.Run(() => BackupService.Create(dlg.FileName, roots, progress, ct));
+            return Loc.T("BackupDone", result.ZipPath, result.Files, FormatSize(result.SourceBytes), FormatSize(result.ZipBytes)) +
+                   ListProblems("BackupSkipped", result.Skipped);
+        });
+    }
+
+    async void BackupRestore_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog { Filter = Loc.T("BackupFileFilter") };
+        if (dlg.ShowDialog(this) != true) return;
+        BackupManifest manifest;
+        try { manifest = BackupService.Inspect(dlg.FileName); }
+        catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)
+        {
+            Error(ex.Message);
+            return;
+        }
+        var question = Loc.T("BackupRestoreConfirm", manifest.CreatedAt.LocalDateTime.ToString("g"), manifest.MachineName,
+                           manifest.Files.Count, FormatSize(manifest.Files.Sum(f => f.Length))) +
+                       (ClaudeInstall.FindLauncher() == null ? Loc.T("BackupClaudeMissing") : "");
+        if (MessageBox.Show(this, question, Loc.T("TabBackup"), MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
+            return;
+        // An open Claude Desktop would write its own copy back over what is restored.
+        foreach (var p in _profiles.Where(p => InstanceManager.FindMainProcess(p.Config) != null).ToList())
+            InstanceManager.Stop(p.Config);
+        RefreshRunning();
+
+        var roots = BackupRoots.CurrentFor(manifest);
+        await RunBackupTask(async (progress, ct) =>
+        {
+            var result = await Task.Run(() => BackupService.Restore(dlg.FileName, roots, progress, ct));
+            ReloadSettings();
+            return Loc.T("RestoreDone", result.Restored, result.Unchanged) +
+                   (result.UndoDir != null ? "\n" + Loc.T("RestoreUndo", result.UndoDir) : "") +
+                   ListProblems("RestoreFailed", result.Failed);
+        });
+    }
+
+    void BackupCancel_Click(object sender, RoutedEventArgs e) => _backupCancel?.Cancel();
+
+    bool CloseRunningProfiles(string questionKey)
+    {
+        var running = _profiles.Where(p => InstanceManager.FindMainProcess(p.Config) != null).ToList();
+        if (running.Count == 0) return true;
+        var names = string.Join(", ", running.Select(p => $"\"{p.Name}\""));
+        if (MessageBox.Show(this, Loc.T(questionKey, names), Loc.T("TabBackup"),
+                MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
+            return false;
+        foreach (var p in running) InstanceManager.Stop(p.Config);
+        RefreshRunning();
+        return true;
+    }
+
+    async Task RunBackupTask(Func<IProgress<BackupProgress>, CancellationToken, Task<string>> work)
+    {
+        using var cancel = new CancellationTokenSource();
+        _backupCancel = cancel;
+        SetBackupBusy(true);
+        BackupReport.Text = "";
+        var progress = new Progress<BackupProgress>(p =>
+        {
+            BackupBar.Value = p.Percent;
+            var key = p.Stage switch
+            {
+                BackupStage.Writing => "BackupWriting",
+                BackupStage.Verifying => "BackupVerifying",
+                _ => "BackupRestoring",
+            };
+            BackupProgressText.Text = Loc.T(key, p.Percent, p.Current);
+        });
+        try { BackupReport.Text = await work(progress, cancel.Token); }
+        catch (OperationCanceledException) { BackupReport.Text = Loc.T("BackupCancelled"); }
+        catch (Exception ex) { BackupReport.Text = ex.Message; }
+        finally
+        {
+            _backupCancel = null;
+            SetBackupBusy(false);
+        }
+    }
+
+    void SetBackupBusy(bool busy)
+    {
+        BackupCreate.IsEnabled = BackupRestore.IsEnabled = !busy;
+        BackupCancel.Visibility = BackupBar.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
+        if (!busy) BackupProgressText.Text = "";
+    }
+
+    static string ListProblems(string titleKey, IReadOnlyList<string> items)
+    {
+        const int shown = 8;
+        if (items.Count == 0) return "";
+        var lines = items.Take(shown).Select(i => "  " + i);
+        var more = items.Count > shown ? "\n  " + Loc.T("BackupMore", items.Count - shown) : "";
+        return "\n\n" + Loc.T(titleKey, items.Count) + "\n" + string.Join("\n", lines) + more;
+    }
+
+    static string FormatSize(long bytes) => bytes >= 1L << 30
+        ? $"{bytes / (double)(1L << 30):0.0} GB"
+        : $"{bytes / (double)(1L << 20):0.0} MB";
+
+    /// <summary>Picks up restored settings in place, because the notification router keeps using this same object.</summary>
+    void ReloadSettings()
+    {
+        var loaded = ProfileStore.Load();
+        Settings.Profiles = loaded.Profiles;
+        Settings.StartMinimized = loaded.StartMinimized;
+        Settings.RouteNotifications = loaded.RouteNotifications;
+        Settings.UsageRefreshSeconds = loaded.UsageRefreshSeconds;
+        Settings.WarnFiveHourPercent = loaded.WarnFiveHourPercent;
+        Settings.Theme = loaded.Theme;
+        Settings.Language = loaded.Language;
+        Settings.RunRemote = loaded.RunRemote;
+        Settings.RemoteScript = loaded.RemoteScript;
+        Theme.Apply(Settings.Theme);
+        Theme.ApplyLanguage(Settings.Language);
+        _usageTimer.Interval = TimeSpan.FromSeconds(Math.Max(30, Settings.UsageRefreshSeconds));
+        LoadSettingsUi();
+        RebuildProfiles();
+        LoadSessions();
+    }
+
     // ---------- Settings ----------
 
     void LoadSettingsUi()
@@ -411,7 +557,11 @@ public partial class MainWindow : Window
         ThemeCombo.SelectedIndex = Math.Max(0, Array.FindIndex(ThemeChoices, t => t.Mode == Settings.Theme));
         StartWithWindows.IsChecked = StartupManager.IsEnabled;
         StartMinimized.IsChecked = Settings.StartMinimized;
+        RouteNotifications.IsChecked = Settings.RouteNotifications;
         RouteLinks.IsChecked = LinkRouter.IsEnabled;
+        RunRemote.IsChecked = Settings.RunRemote;
+        RemoteStatus.Text = Settings.RunRemote ? _remote.Status
+            : RemoteBridge.FindScript(Settings.RemoteScript) is { } script ? Loc.T("RemoteFound", script) : Loc.T("RemoteNoScript");
         UpdateLinkHint();
         RefreshCombo.ItemsSource = RefreshChoices.Select(s => s < 120 ? Loc.T("Seconds", s) : Loc.T("Minutes", s / 60)).ToList();
         RefreshCombo.SelectedIndex = Math.Max(0, Array.IndexOf(RefreshChoices, Settings.UsageRefreshSeconds));
@@ -446,6 +596,14 @@ public partial class MainWindow : Window
 
     void SetDefaultApp_Click(object sender, RoutedEventArgs e) => LinkRouter.OpenDefaultAppsSettings();
 
+    void RunRemote_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_loadingSettings) return;
+        Settings.RunRemote = RunRemote.IsChecked == true;
+        ProfileStore.Save(Settings);
+        if (Settings.RunRemote) _remote.Start(Settings.RemoteScript); else _remote.Stop();
+    }
+
     /// <summary>Shows the "set in Windows" button while the option is on but Windows still opens links in Claude.</summary>
     void UpdateLinkHint() =>
         SetDefaultApp.Visibility = RouteLinks.IsChecked == true && !LinkRouter.IsWindowsDefault ? Visibility.Visible : Visibility.Collapsed;
@@ -476,6 +634,7 @@ public partial class MainWindow : Window
     {
         if (_loadingSettings) return;
         Settings.StartMinimized = StartMinimized.IsChecked == true;
+        Settings.RouteNotifications = RouteNotifications.IsChecked == true;
         if (RefreshCombo.SelectedIndex >= 0) Settings.UsageRefreshSeconds = RefreshChoices[RefreshCombo.SelectedIndex];
         if (WarnCombo.SelectedIndex >= 0) Settings.WarnFiveHourPercent = WarnChoices[WarnCombo.SelectedIndex];
         _usageTimer.Interval = TimeSpan.FromSeconds(Settings.UsageRefreshSeconds);
@@ -533,6 +692,7 @@ public partial class MainWindow : Window
     void ExitApp()
     {
         _exiting = true;
+        _remote.Stop();
         _tray.Visible = false;
         _tray.Dispose();
         Close();

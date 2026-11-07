@@ -8,8 +8,10 @@
 - **Usage thời gian thực:** hiển thị usage 5 giờ, tuần (mọi model) và tuần theo từng model, kèm giờ reset của từng tài khoản. Số liệu lấy giống hệt cách Claude Desktop lấy: gọi `api.anthropic.com/api/oauth/usage` bằng token của chính profile đó, không đọc file lịch sử. Khi usage 5 giờ vượt ngưỡng, app hiện cảnh báo và gợi ý profile còn nhiều usage nhất.
 - **Chuyển session Code** sang profile khác để làm tiếp khi hết usage. Lịch sử hội thoại được giữ nguyên.
 - **MCP dùng chung:** chọn MCP server nào dùng cho profile nào. Connector từ xa có thể thêm bằng URL.
+- **Sao lưu và khôi phục:** lưu cài đặt Claude, session Code, MCP, skills, plugins và các profile vào một file `.zip`, rồi khôi phục sau khi cài lại Claude.
 - **Khởi động cùng Windows:** app chạy ở khay hệ thống và tự mở các profile đã chọn.
 - **Giao diện sáng/tối:** chọn Sáng, Tối hoặc Theo Windows trong tab Cài đặt.
+- **Claude Remote (điện thoại):** dùng Claude Code trên PC này từ điện thoại qua Tailscale, bằng tài khoản của bất kỳ profile nào: web app hiển thị session như tab Code của Desktop, có usage, duyệt quyền, đính kèm và chọn model. Bật ở **Settings → Claude Remote**; cách cài trong [remote/README.md](remote/README.md).
 - **Tiếng Anh / tiếng Việt:** app mặc định dùng tiếng Anh. Đổi sang tiếng Việt ở **Settings → Language → Tiếng Việt**; giao diện đổi ngay, không cần khởi động lại.
 
 ## Cài đặt
@@ -42,10 +44,23 @@ Yêu cầu: Windows 10/11 và Claude Desktop đã cài sẵn.
    - Claude Desktop đang mở sẽ ghi đè thay đổi, nên app hỏi trước khi tắt các profile liên quan, rồi đề nghị mở profile đích khi chép xong.
 4. **MCP dùng chung:** tick profile cho từng server rồi bấm **Áp dụng**. Chỉ profile có thay đổi mới bị đụng tới. Nếu profile đó đang chạy, app tắt nó, ghi cấu hình rồi mở lại, vì Claude Desktop đang mở sẽ ghi đè file cấu hình. MCP khai báo trong `~\.claude.json` (dùng cho session Code) vốn đã dùng chung cho mọi profile.
 5. **Cài đặt:** bật "Khởi động cùng Windows". Muốn một profile tự mở khi bật máy, bấm **Sửa** trên profile đó và tick "Tự mở khi khởi động".
+   - **Đưa đúng profile lên trước khi bấm notification** (bật sẵn): mọi profile dùng chung một danh tính ứng dụng trên Windows, nên khi bấm notification của Claude, profile Mặc định được focus còn profile sở hữu notification mở chat ở phía sau. Bật tuỳ chọn này thì Claude Switcher đưa profile sở hữu lên trước. Tính năng nhận ra profile sở hữu qua phản ứng của nó với cú bấm (nút taskbar chớp hoặc một dòng trong log) và chỉ có tác dụng với notification đang bật lên; mở lại từ Notification Center vẫn vào profile Mặc định. Sau khi bấm notification, Claude không hiện nội dung mới cho đến khi cửa sổ được click, nên Claude Switcher gửi thêm một cú click vào lề trống bên trái khung chat mà không di chuyển con trỏ chuột. Vì vậy ô nhập có thể mất con trỏ.
    - **Mở link đăng nhập đúng profile:** Windows luôn mở link `claude://` (ví dụ link đăng nhập trong email) bằng profile Mặc định. Khi đăng nhập cho profile khác, cửa sổ Mặc định sẽ bị kẹt ở màn hình "Use verification code". Bật tuỳ chọn này thì Claude Switcher nhận link và chuyển link đăng nhập tới profile đang mở mà chưa đăng nhập; các link khác vẫn mở ở profile Mặc định. Windows không cho ứng dụng tự đặt mình làm trình mở link mặc định, nên khi bật, app mở sẵn trang Claude Switcher trong Settings → Default apps; bấm dòng CLAUDE và chọn Claude Switcher.
 6. **Khay hệ thống:** đóng cửa sổ chỉ thu app xuống khay.
    - **Click trái** icon: bảng chọn nhanh, bấm một lần để mở profile. Nút **Mở Claude Switcher** ở cuối bảng mở cửa sổ chính. Bấm ra ngoài hoặc nhấn Esc để đóng bảng.
    - **Chuột phải** icon: menu đầy đủ (mở/tắt từng profile, làm mới usage, **Thoát** để tắt hẳn app).
+7. **Sao lưu:** xem [Sao lưu và khôi phục](#sao-lưu-và-khôi-phục).
+
+### Sao lưu và khôi phục
+
+Trong tab **Sao lưu**, **Tạo bản sao lưu...** lưu một file `.zip` rồi đọc lại để kiểm tra. Hãy để file này ngoài các thư mục Claude dùng và giữ kèm file exe. Để khôi phục: cài Claude, mở một lần rồi đóng, sau đó bấm **Khôi phục...**. Các file bị thay thế được chuyển vào `backups\restore-<thời gian>\`, và Claude đang đăng nhập vẫn giữ nguyên đăng nhập.
+
+- **Được lưu:** `~\.claude` (lịch sử session, memory, skills, plugins, cài đặt), MCP trong `~\.claude.json`, và với mỗi profile là `claude_desktop_config.json`, file session Code và Cowork cùng cài đặt app. Skill nối bằng junction được lưu thành thư mục thật.
+- **Cố ý không lưu:** thông tin đăng nhập (`.credentials.json`, token trong `config.json`, cookie và dữ liệu trình duyệt). Sau khi khôi phục, hãy đăng nhập lại từng profile và các MCP dùng OAuth. Session Code được liệt kê theo tài khoản, nên hãy dùng đúng tài khoản cũ để thấy chúng trong Desktop.
+- **Không lưu vì Claude tự tạo lại:** cache, log và runtime `claude-code` đã tải.
+- **Ngoài phạm vi:** chat thường do server claude.ai giữ nên không có trong zip. Các chương trình mà MCP chạy (`npx`, `uvx`, những gì cài ở nơi khác) và thư mục `.claude` trong project của bạn phải tự cài lại hoặc tự giữ.
+- **Giữ file zip riêng tư:** file không có mật khẩu, và chứa key ghi trong cài đặt MCP (`env`) cùng mọi nội dung trong session.
+- **User Windows khác:** đường dẫn trong các file cấu hình chính được đổi theo thư mục home mới. Lịch sử session của project nằm trong home cũ vẫn giữ đường dẫn cũ. Chỉ khôi phục bản sao lưu do chính bạn tạo, vì bản sao lưu có thể đặt hook và lệnh MCP mà Claude sẽ chạy.
 
 ### Dòng lệnh
 
@@ -55,8 +70,11 @@ Yêu cầu: Windows 10/11 và Claude Desktop đã cài sẵn.
 | `ClaudeSwitcher.exe --stop <id>` | Tắt một profile |
 | `ClaudeSwitcher.exe --selftest report.txt` | Kiểm tra: tìm Claude, đọc token, usage, session, MCP (không ghi token ra file) |
 | `ClaudeSwitcher.exe --open-url <link>` | Mở một link `claude://` ở đúng profile (Windows tự gọi khi bật "Mở link đăng nhập đúng profile") |
+| `ClaudeSwitcher.exe --backup <file.zip>` | Tạo bản sao lưu; kết quả ghi vào `<file.zip>.report.txt`. Hãy đóng Claude trước, vì lệnh này không tự đóng profile |
+| `ClaudeSwitcher.exe --restore <file.zip> [--to <thư mục>]` | Khôi phục bản sao lưu, từ chối khi còn profile đang mở; `--to` giải nén vào thư mục thử thay vì dữ liệu thật của Claude |
 | `ClaudeSwitcher.exe --startup` | Chế độ khởi động cùng Windows |
 | `ClaudeSwitcher.exe --screenshot ui.png [--theme dark] [--lang vi]` | Render các tab ra ảnh PNG để kiểm tra giao diện, không chiếm focus |
+| `ClaudeSwitcher.exe --api profiles|usage [id]|token <id>|launch <id>|stop <id>` | In JSON ra stdout cho Claude Remote (chỉ có stdout khi tiến trình gọi chuyển hướng nó). `token` in token đăng nhập của profile: chỉ cùng user Windows mới gọi được, giống file token gốc |
 
 ## Dữ liệu
 
