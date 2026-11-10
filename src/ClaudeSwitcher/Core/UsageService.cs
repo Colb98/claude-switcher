@@ -21,7 +21,8 @@ public sealed record UsageReport(
     IReadOnlyList<UsageWindow> ScopedWeekly,
     string? Email,
     string? PlanName,
-    DateTimeOffset FetchedAt)
+    DateTimeOffset FetchedAt,
+    bool Stale = false)
 {
     public static UsageReport Fail(UsageStatus status, string message) =>
         new(status, message, null, null, Array.Empty<UsageWindow>(), null, null, DateTimeOffset.Now);
@@ -36,7 +37,35 @@ public sealed class UsageService
     static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
     readonly Dictionary<string, (string Token, string? Email, string? Plan)> _profileCache = new();
 
-    public async Task<UsageReport> FetchAsync(string dataDir, CancellationToken ct = default)
+    static readonly TimeSpan RateLimitBackoff = TimeSpan.FromMinutes(5);
+
+    /// <summary>Always asks the server, unless it recently answered 429 (then the last good numbers come back, marked stale).</summary>
+    public Task<UsageReport> FetchAsync(string dataDir, CancellationToken ct = default) => FetchAsync(dataDir, TimeSpan.Zero, ct);
+
+    /// <summary>
+    /// Usage through a cache shared by every Claude Switcher process (the tray app and --api calls from Claude Remote),
+    /// so the same token is not polled twice. A report younger than maxAge is reused; after a 429 the server is left
+    /// alone for a few minutes and the last good report is returned with Stale set.
+    /// </summary>
+    public async Task<UsageReport> FetchAsync(string dataDir, TimeSpan maxAge, CancellationToken ct = default)
+    {
+        var now = DateTimeOffset.Now;
+        var cached = UsageCache.Get(dataDir);
+        var last = cached?.Report is { Status: UsageStatus.Ok } r ? r : null;
+        if (last != null && now - last.FetchedAt < maxAge) return last;
+        if (cached?.BackoffUntil > now)
+            return last != null ? last with { Stale = true, Message = Loc.T("UsageRateLimited") }
+                : UsageReport.Fail(UsageStatus.Failed, Loc.T("UsageRateLimited"));
+
+        var fresh = await FetchLiveAsync(dataDir, ct);
+        if (fresh.Status == UsageStatus.Ok) { UsageCache.Put(dataDir, fresh, null); return fresh; }
+        if (fresh.Status != UsageStatus.Failed) return fresh;
+        var limited = fresh.Message?.Contains("429") == true;
+        UsageCache.Put(dataDir, last, limited ? now + RateLimitBackoff : null);
+        return last != null ? last with { Stale = true, Message = limited ? Loc.T("UsageRateLimited") : fresh.Message } : fresh;
+    }
+
+    async Task<UsageReport> FetchLiveAsync(string dataDir, CancellationToken ct)
     {
         IReadOnlyList<DesktopCredential> creds;
         try { creds = DesktopSecrets.ReadCredentials(dataDir); }

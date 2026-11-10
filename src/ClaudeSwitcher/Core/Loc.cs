@@ -99,6 +99,10 @@ public static class Loc
         ["RouteLinksHint"] = (
             "Sign-in links from email (claude://) go to the open profile that has not signed in yet, instead of always opening the Default profile. Other links still open in the Default profile. If Windows asks which app should open the link, choose Claude Switcher.",
             "Link đăng nhập trong email (claude://) được gửi tới profile đang mở mà chưa đăng nhập, thay vì luôn mở profile Mặc định. Các link khác vẫn mở ở profile Mặc định. Nếu Windows hỏi mở link bằng ứng dụng nào, chọn Claude Switcher."),
+        ["RouteNotifications"] = ("Focus the right profile when a notification is clicked", "Đưa đúng profile lên trước khi bấm notification"),
+        ["RouteNotificationsHint"] = (
+            "Windows gives the focus to the Default profile when you click a Claude notification. With this on, the profile that owns the notification comes to the front. It only works on the pop-up notification, not on one opened later from Notification Center.",
+            "Khi bấm notification của Claude, Windows đưa profile Mặc định lên trước. Bật tuỳ chọn này thì profile sở hữu notification sẽ được đưa lên. Chỉ có tác dụng với notification đang bật lên, không áp dụng khi mở lại từ Notification Center."),
         ["SetDefaultApp"] = ("Choose Claude Switcher in Windows Default apps", "Chọn Claude Switcher trong Default apps của Windows"),
         ["RefreshEvery"] = ("Refresh usage every", "Làm mới usage mỗi"),
         ["WarnAt"] = ("Warn when 5-hour usage ≥", "Cảnh báo khi usage 5 giờ ≥"),
@@ -108,6 +112,19 @@ public static class Loc
         ["Minutes"] = ("{0} minutes", "{0} phút"),
         ["LauncherInfo"] = ("Claude Desktop: {0}\nDefault profile data: {1}\nApp data: {2}", "Claude Desktop: {0}\nDữ liệu profile mặc định: {1}\nDữ liệu app: {2}"),
         ["NotFound"] = ("not found", "không tìm thấy"),
+        ["UsageRateLimited"] = ("Usage server is busy (429): showing the last numbers", "Máy chủ usage đang bận (429): đang hiện số liệu gần nhất"),
+        ["RunRemote"] = ("Claude Remote: use Claude Code from your phone", "Claude Remote: dùng Claude Code từ điện thoại"),
+        ["RunRemoteHint"] = (
+            "Runs the Claude Remote web app on this PC while Claude Switcher runs. Open it on your phone over Tailscale (see remote/README.md).",
+            "Chạy web app Claude Remote trên PC này trong lúc Claude Switcher chạy. Mở nó trên điện thoại qua Tailscale (xem remote/README.md)."),
+        ["RemoteRunning"] = ("Running on http://127.0.0.1:{0}", "Đang chạy ở http://127.0.0.1:{0}"),
+        ["RemoteStopped"] = ("Stopped", "Đã dừng"),
+        ["RemoteRestarting"] = ("Stopped unexpectedly, restarting…", "Bị dừng đột ngột, đang chạy lại…"),
+        ["RemoteCrashed"] = ("Keeps stopping. See the log: {0}", "Liên tục bị dừng. Xem log: {0}"),
+        ["RemoteExternal"] = ("Port {0} is already in use (another Claude Remote may be running)", "Cổng {0} đang bận (có thể Claude Remote khác đang chạy)"),
+        ["RemoteNoNode"] = ("Node.js not found. Install Node.js 22 or later.", "Không tìm thấy Node.js. Cài Node.js 22 trở lên."),
+        ["RemoteNoScript"] = ("Claude Remote not found: build remote/ (npm run build) next to this exe.", "Không tìm thấy Claude Remote: build remote/ (npm run build) cạnh file exe này."),
+        ["RemoteFound"] = ("Found: {0}", "Tìm thấy: {0}"),
 
         // Status bar and messages
         ["OpenFailed"] = ("Could not open {0}: {1}", "Không mở được {0}: {1}"),
@@ -203,5 +220,52 @@ public static class Loc
         ["FiveHour"] = ("5 hours", "5 giờ"),
         ["WeekAll"] = ("Week (all models)", "Tuần (mọi model)"),
         ["WeekModel"] = ("Week ({0})", "Tuần ({0})"),
+
+        // Backup and restore
+        ["TabBackup"] = ("Backup", "Sao lưu"),
+        ["BackupIntro"] = (
+            "Saves your Claude settings, Code sessions, MCP servers, skills, plugins and profiles into one .zip file, so you can uninstall Claude and pick up where you left off later.",
+            "Lưu cài đặt Claude, session Code, MCP, skills, plugins và các profile vào một file .zip, để bạn có thể gỡ Claude rồi dùng tiếp sau này."),
+        ["BackupNoSignIn"] = (
+            "Sign-in is not saved: after restoring, sign in to each profile again. Caches and files Claude can download again are left out too.",
+            "Không lưu thông tin đăng nhập: sau khi khôi phục, hãy đăng nhập lại từng profile. Cache và các file Claude có thể tải lại cũng không được lưu."),
+        ["BackupSecretsWarn"] = (
+            "The zip has no password. Keys written in MCP settings (env) and anything said in your sessions are inside it, so keep it private.",
+            "File zip không có mật khẩu. Key ghi trong cài đặt MCP (env) và mọi nội dung trong session đều nằm trong đó, nên hãy giữ file này riêng tư."),
+        ["BackupRestoreOrder"] = (
+            "To restore: install Claude, open it once and close it, then click Restore.",
+            "Để khôi phục: cài Claude, mở một lần rồi đóng, sau đó bấm Khôi phục."),
+        ["BackupCreate"] = ("Create backup...", "Tạo bản sao lưu..."),
+        ["BackupRestore"] = ("Restore...", "Khôi phục..."),
+        ["BackupFileFilter"] = ("Claude backup (*.zip)|*.zip", "Bản sao lưu Claude (*.zip)|*.zip"),
+        ["BackupInsideDataFolder"] = (
+            "This folder is part of Claude's data and may be deleted when you uninstall Claude. Save the backup here anyway?",
+            "Thư mục này thuộc dữ liệu của Claude và có thể bị xoá khi gỡ Claude. Vẫn lưu bản sao lưu ở đây?"),
+        ["BackupMustClose"] = (
+            "{0} must be closed so the saved data is complete. Close now?",
+            "Cần đóng {0} để dữ liệu được lưu đầy đủ. Đóng ngay?"),
+        ["BackupWriting"] = ("Saving {0}%: {1}", "Đang lưu {0}%: {1}"),
+        ["BackupVerifying"] = ("Checking the backup {0}%: {1}", "Đang kiểm tra bản sao lưu {0}%: {1}"),
+        ["BackupRestoring"] = ("Restoring {0}%: {1}", "Đang khôi phục {0}%: {1}"),
+        ["BackupCancelled"] = ("Cancelled.", "Đã huỷ."),
+        ["BackupDone"] = (
+            "Backup saved and checked: {0}\n{1} files, {2} of data, zip size {3}.",
+            "Đã lưu và kiểm tra bản sao lưu: {0}\n{1} file, {2} dữ liệu, file zip {3}."),
+        ["BackupSkipped"] = ("Could not save {0} item(s):", "Không lưu được {0} mục:"),
+        ["BackupMore"] = ("...and {0} more", "...và {0} mục nữa"),
+        ["BackupRestoreConfirm"] = (
+            "Restore this backup?\n\nCreated: {0}\nComputer: {1}\n{2} files, {3}\n\nFiles it replaces are kept in the backups folder. Open profiles will be closed.",
+            "Khôi phục bản sao lưu này?\n\nTạo lúc: {0}\nMáy: {1}\n{2} file, {3}\n\nCác file bị thay thế được giữ trong thư mục backup. Các profile đang mở sẽ bị đóng."),
+        ["BackupClaudeMissing"] = (
+            "\n\nClaude Desktop is not installed yet. Installing it first is recommended, so the data reaches the right folder.",
+            "\n\nClaude Desktop chưa được cài. Nên cài trước để dữ liệu về đúng thư mục."),
+        ["RestoreDone"] = (
+            "Restored {0} files, {1} already up to date. Sign in to each profile again.",
+            "Đã khôi phục {0} file, {1} file đã giống sẵn. Hãy đăng nhập lại từng profile."),
+        ["RestoreUndo"] = ("Replaced files are in: {0}", "Các file bị thay thế nằm ở: {0}"),
+        ["RestoreFailed"] = ("Could not restore {0} file(s):", "Không khôi phục được {0} file:"),
+        ["BackupBadFile"] = ("This file is not a Claude Switcher backup, or it is damaged.", "File này không phải bản sao lưu của Claude Switcher, hoặc đã bị hỏng."),
+        ["BackupBadPath"] = ("The backup contains an unsafe path, so nothing was restored: {0}", "Bản sao lưu có đường dẫn không an toàn nên chưa khôi phục gì: {0}"),
+        ["BackupVerifyFailed"] = ("The backup failed its check at {0}. Save it again, to another drive if possible.", "Bản sao lưu không qua được bước kiểm tra tại {0}. Hãy lưu lại, tốt nhất là sang ổ khác."),
     };
 }

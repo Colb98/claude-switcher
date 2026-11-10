@@ -219,6 +219,72 @@ public class McpSyncTests
     }
 }
 
+public sealed class NotificationRouterTests : IDisposable
+{
+    const string Opened = "2026-11-02 20:34:05 [info] [CCD] LocalSessions.setFocusedSession: sessionId=local_ec510697\n";
+    const string Cleared = "2026-11-02 20:34:05 [info] [CCD] LocalSessions.setFocusedSession: sessionId=null\n";
+    readonly string _log = Path.Combine(Path.GetTempPath(), "cs-test-" + Guid.NewGuid().ToString("N")[..8] + ".log");
+
+    public void Dispose() => File.Delete(_log);
+
+    [Fact]
+    public void InputHasTheNativeSize() => Assert.Equal(IntPtr.Size == 8 ? 40 : 28, NotificationRouter.InputSize);
+
+    [Fact]
+    public void MatchesAFlashingProcessToItsProfile()
+    {
+        var work = new ProfileConfig { Id = "work", DataDir = @"C:\p\work" };
+        var other = new ProfileConfig { Id = "other", DataDir = @"C:\p\other" };
+        var running = new Dictionary<string, int> { [@"C:\p\work"] = 10, [@"C:\p\default"] = 20 };
+        Assert.Same(work, NotificationRouter.ProfileForProcess(10, new[] { other, work }, running));
+        // The default profile's window, or any other app, is not a profile to route to.
+        Assert.Null(NotificationRouter.ProfileForProcess(20, new[] { other, work }, running));
+        Assert.Null(NotificationRouter.ProfileForProcess(99, new[] { other, work }, running));
+    }
+
+    [Fact]
+    public void FindsAChatOpenedAfterTheOffset()
+    {
+        File.WriteAllText(_log, "older line\n");
+        var offset = NotificationRouter.LogLength(_log);
+        Assert.False(NotificationRouter.SessionFocusedSince(_log, offset));
+        File.AppendAllText(_log, Cleared + Opened);
+        Assert.True(NotificationRouter.SessionFocusedSince(_log, offset));
+    }
+
+    [Fact]
+    public void IgnoresChatsOpenedBeforeTheOffsetAndClearedFocus()
+    {
+        File.WriteAllText(_log, Opened);
+        var offset = NotificationRouter.LogLength(_log);
+        File.AppendAllText(_log, Cleared + "other line\n");
+        Assert.False(NotificationRouter.SessionFocusedSince(_log, offset));
+    }
+
+    [Fact]
+    public void ReadsARotatedLogFromItsStart()
+    {
+        File.WriteAllText(_log, Opened);
+        Assert.True(NotificationRouter.SessionFocusedSince(_log, 1_000_000));
+    }
+
+    [Fact]
+    public void MissingLogHasNoActivity()
+    {
+        Assert.Equal(0, NotificationRouter.LogLength(_log));
+        Assert.False(NotificationRouter.SessionFocusedSince(_log, 0));
+    }
+
+    [Fact]
+    public void ReadsALogHeldOpenByClaude()
+    {
+        using var writer = new FileStream(_log, FileMode.Create, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete);
+        writer.Write(Encoding.UTF8.GetBytes(Opened));
+        writer.Flush();
+        Assert.True(NotificationRouter.SessionFocusedSince(_log, 0));
+    }
+}
+
 public class LinkRouterTests
 {
     static readonly ProfileConfig Default = new() { Id = "default", Name = "Mặc định" };
@@ -266,5 +332,26 @@ public class LinkRouterTests
         // Signed-out but not running, and non sign-in links, both keep Windows' usual behaviour.
         Assert.Same(Default, LinkRouter.PickTarget("claude://magic-link#a:b", All, p => p == Default ? DateTime.Now : null, p => p != Fresh));
         Assert.Same(Default, LinkRouter.PickTarget("claude://new?q=hi", All, _ => DateTime.Now, _ => false));
+    }
+}
+
+public class UsageCacheTests
+{
+    [Fact]
+    public void Cache_round_trips_report_and_backoff()
+    {
+        using var p = new FakeProfile(); // points CLAUDE_SWITCHER_HOME at a temp folder
+        var report = new UsageReport(UsageStatus.Ok, null,
+            new UsageWindow("5h", 42, DateTimeOffset.Now.AddHours(2)), new UsageWindow("week", 10, null),
+            new[] { new UsageWindow("Week (Fable)", 3, null) }, "a@b.c", "Pro", DateTimeOffset.Now, Stale: true);
+        var until = DateTimeOffset.Now.AddMinutes(5);
+        UsageCache.Put(p.Dir, report, until);
+
+        var back = UsageCache.Get(p.Dir.ToUpperInvariant() + "\\");
+        Assert.NotNull(back?.Report);
+        Assert.Equal(42, back!.Report!.FiveHour!.Percent);
+        Assert.Equal("Week (Fable)", Assert.Single(back.Report.ScopedWeekly).Label);
+        Assert.False(back.Report.Stale); // stored as a plain good report
+        Assert.Equal(until.ToUnixTimeSeconds(), back.BackoffUntil!.Value.ToUnixTimeSeconds());
     }
 }
